@@ -70,9 +70,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             body: JSON.stringify(payload)
         });
 
-        const data = await response.json();
+        // Ler resposta como texto primeiro
+        const responseText = await response.text();
 
-        console.log('SigiloPay Response:', {
+        console.log('SigiloPay Raw Response:', {
+            status: response.status,
+            contentType: response.headers.get('content-type'),
+            bodyPreview: responseText.substring(0, 200)
+        });
+
+        // Tentar fazer parse do JSON
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (parseError) {
+            // Resposta não é JSON válido
+            console.error('SigiloPay returned non-JSON response:', responseText);
+            return res.status(response.status || 500).json({
+                error: 'Resposta inválida da SigiloPay',
+                message: responseText || 'A API retornou uma resposta vazia ou inválida',
+                rawResponse: responseText
+            });
+        }
+
+        console.log('SigiloPay Parsed Response:', {
             status: response.status,
             dataStatus: data.status,
             hasError: !!data.error
