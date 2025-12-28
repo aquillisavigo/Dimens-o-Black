@@ -52,14 +52,25 @@ export const generatePix = async (data: SigiloPayPixRequest): Promise<SigiloPayP
     // Generate Basic Auth token
     const credentials = btoa(`${publicKey}:${secretKey}`);
 
-    // Estratégia "Shotgun": Enviar chaves no Header (Basic Auth + Custom) e no Body/Query
-    // Algumas APIs esperam client_id/secret dentro do JSON
+    // Estratégia "Shotgun" V2: Tentar extrair o ID da empresa da chave
+    // Formato provável: "nomedaempresa_hash" -> company: "nomedaempresa"
+    let companyId = '';
+    if (publicKey && publicKey.includes('_')) {
+        companyId = publicKey.split('_')[0];
+    }
+
     const payload = {
         ...data,
+        // Standard fields
         client_id: publicKey,
         client_secret: secretKey,
+        // Common variations
         'public_key': publicKey,
-        'secret_key': secretKey
+        'secret_key': secretKey,
+        'request_token': secretKey,
+        'company': companyId || undefined,     // Tentar enviar o nome da empresa
+        'company_id': companyId || undefined,  // Tentar enviar o ID da empresa
+        'account_id': companyId || undefined   // Tentar enviar o ID da conta
     };
 
     try {
