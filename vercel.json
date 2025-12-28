@@ -23,7 +23,7 @@
                 },
                 {
                     "key": "Access-Control-Allow-Headers",
-                    "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, x-public-key, x-secret-key, X-Public-Key, X-Secret-Key, Client-ID, Client-Secret, Authorization, company, company-id, account-id"
+                    "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, x-public-key, x-secret-key, X-Public-Key, X-Secret-Key, Client-ID, Client-Secret, Authorization, company, company-id, account-id, ci, cs"
                 }
             ]
         }

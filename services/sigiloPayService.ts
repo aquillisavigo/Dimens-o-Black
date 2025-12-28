@@ -70,7 +70,10 @@ export const generatePix = async (data: SigiloPayPixRequest): Promise<SigiloPayP
         'request_token': secretKey,
         'company': companyId || undefined,     // Tentar enviar o nome da empresa
         'company_id': companyId || undefined,  // Tentar enviar o ID da empresa
-        'account_id': companyId || undefined   // Tentar enviar o ID da conta
+        'account_id': companyId || undefined,  // Tentar enviar o ID da conta
+        // SuitPay/Amplo variations
+        'ci': publicKey,
+        'cs': secretKey
     };
 
     try {
@@ -86,7 +89,10 @@ export const generatePix = async (data: SigiloPayPixRequest): Promise<SigiloPayP
                 'Client-ID': publicKey,
                 'Client-Secret': secretKey,
                 'x-client-id': publicKey,
-                'x-client-secret': secretKey
+                'x-client-secret': secretKey,
+                // SuitPay/Amplo specific
+                'ci': publicKey,
+                'cs': secretKey
             },
         });
 
