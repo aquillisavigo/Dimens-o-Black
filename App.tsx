@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import { ActiveTab } from './types';
@@ -296,6 +297,7 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 transition-colors duration-300">
       {toast && <Toast message={toast.message} type={toast.type} />}
+      <SpeedInsights />
       <SocialProofPopup />
 
       <Sidebar
