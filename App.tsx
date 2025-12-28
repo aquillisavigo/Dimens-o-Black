@@ -37,6 +37,7 @@ const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showLogin, setShowLogin] = useState(false); // New: Control login modal
 
   // Tema local (fallback enquanto carrega perfil)
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -57,7 +58,10 @@ const App: React.FC = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) fetchProfile(session.user.id);
+      if (session) {
+        fetchProfile(session.user.id);
+        setShowLogin(false); // Hide login if session restored
+      }
       setLoading(false);
     });
 
@@ -67,6 +71,7 @@ const App: React.FC = () => {
       setSession(session);
       if (session) {
         fetchProfile(session.user.id);
+        setShowLogin(false); // Hide login on new session
 
         // Realtime Profile Updates (Balance, Notifications, etc)
         const channel = supabase
@@ -90,7 +95,10 @@ const App: React.FC = () => {
 
         return () => { supabase.removeChannel(channel); };
       }
-      else setProfile(null);
+      else {
+        setProfile(null);
+        // Do not force showLogin here, let user browse as guest
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -152,9 +160,21 @@ const App: React.FC = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setActiveTab('dashboard');
+    showToast('Você saiu da conta.', 'success');
+  };
+
+  const checkAuth = () => {
+    if (!session) {
+      setShowLogin(true);
+      showToast('Faça login para continuar.', 'error');
+      return false;
+    }
+    return true;
   };
 
   const handlePurchase = async (price: number, name: string, productId?: string) => {
+    if (!checkAuth()) return false;
+
     if (profile && profile.balance >= price) {
       const newBalance = profile.balance - price;
 
@@ -215,6 +235,8 @@ const App: React.FC = () => {
   };
 
   const handleRecharge = async (amount: number) => {
+    if (!checkAuth()) return;
+
     if (profile) {
       const newBalance = profile.balance + amount;
 
@@ -240,17 +262,17 @@ const App: React.FC = () => {
     );
   }
 
-  if (!session) {
-    return <LoginView onLogin={() => { }} onToast={showToast} />;
-  }
+  // Removed global session check to allow guest access
 
   const renderContent = () => {
+    // Determine content based on tab & auth
     const balance = profile?.balance || 0;
 
     switch (activeTab) {
       case 'dashboard':
         return <DashboardView onTabChange={setActiveTab} />;
       case 'profile':
+        if (!session) { setShowLogin(true); return null; }
         return <ProfileView profile={profile} onUpdate={() => fetchProfile(session?.user?.id)} />;
       case 'temas':
         return <TemasView balance={balance} onPurchase={handlePurchase} />;
@@ -259,6 +281,7 @@ const App: React.FC = () => {
       case 'ofertas-clonadas':
         return <OfertasClonadasView balance={balance} onPurchase={handlePurchase} />;
       case 'black-money':
+        if (!session) { setShowLogin(true); return null; }
         return (
           <BlackMoneyView
             balance={balance}
@@ -269,6 +292,7 @@ const App: React.FC = () => {
           />
         );
       case 'planos':
+        // Planos can be viewed by anyone, but purchase needs login
         return (
           <PlansView
             userEmail={session?.user?.email}
@@ -279,8 +303,10 @@ const App: React.FC = () => {
       case 'kl-remotas':
         return <KLRemotasView balance={balance} onPurchase={handlePurchase} />;
       case 'admin':
+        if (!session) { setShowLogin(true); return null; }
         return <AdminView />;
       case 'downloads':
+        if (!session) { setShowLogin(true); return null; }
         return <MyDownloadsView userId={session?.user?.id} />;
       default:
         return (
@@ -295,17 +321,32 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 transition-colors duration-300">
+    <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 transition-colors duration-300 relative">
       {toast && <Toast message={toast.message} type={toast.type} />}
       <SocialProofPopup />
       <SpeedInsights />
+
+      {/* Login Overlay */}
+      {showLogin && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-300">
+          <div className="relative w-full max-w-md">
+            <button
+              onClick={() => setShowLogin(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white z-50 bg-black/50 p-2 rounded-full"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            <LoginView onLogin={() => setShowLogin(false)} onToast={showToast} />
+          </div>
+        </div>
+      )}
 
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onLogout={handleLogout}
+        onLogout={session ? handleLogout : undefined}
         profile={profile}
       />
 
@@ -315,8 +356,9 @@ const App: React.FC = () => {
           isDarkMode={theme === 'dark'}
           onToggleTheme={toggleTheme}
           onProfileClick={() => setActiveTab('profile')}
-          userName={profile?.full_name || 'Operador'}
-          userId={session.user.id.substring(0, 8).toUpperCase()}
+          onLoginClick={() => setShowLogin(true)}
+          userName={profile?.full_name || 'Visitante'}
+          userId={session?.user?.id.substring(0, 8).toUpperCase() || ''}
         />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-4 scroll-smooth bg-background-light dark:bg-background-dark relative transition-colors duration-300">

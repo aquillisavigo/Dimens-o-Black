@@ -6,11 +6,12 @@ interface HeaderProps {
   isDarkMode: boolean;
   onToggleTheme: () => void;
   onProfileClick: () => void;
+  onLoginClick?: () => void; // New prop
   userName: string;
   userId: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ onMenuClick, isDarkMode, onToggleTheme, onProfileClick, userName, userId }) => {
+const Header: React.FC<HeaderProps> = ({ onMenuClick, isDarkMode, onToggleTheme, onProfileClick, onLoginClick, userName, userId }) => {
   return (
     <header className="h-16 md:h-20 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-border-light dark:border-border-dark flex items-center justify-between px-4 md:px-8 flex-shrink-0 transition-colors duration-300 relative">
       <button
@@ -50,22 +51,34 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isDarkMode, onToggleTheme,
           </div>
         </div>
 
-        <div className="flex items-center border-r border-border-light dark:border-border-dark pr-4 md:pr-6 h-10 gap-4">
-          <NotificationCenter userId={userId} />
-        </div>
-
-        <div onClick={onProfileClick} className="flex items-center gap-3 cursor-pointer group pl-2">
-          <div className="text-right hidden xl:block">
-            <p className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors">{userName}</p>
-          </div>
-          <div className="relative">
-            <div className="absolute inset-0 bg-primary/20 rounded-full blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="h-8 w-8 md:h-10 md:w-10 rounded-full border border-border-light dark:border-border-dark bg-gray-100 dark:bg-surface-dark-2 flex items-center justify-center relative z-10 transition-all duration-300 group-hover:border-primary">
-              <span className="material-symbols-outlined text-gray-500 dark:text-gray-400 group-hover:text-primary">person</span>
+        {userId ? (
+          <>
+            <div className="flex items-center border-r border-border-light dark:border-border-dark pr-4 md:pr-6 h-10 gap-4">
+              <NotificationCenter userId={userId} />
             </div>
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-background-dark rounded-full z-20"></div>
-          </div>
-        </div>
+
+            <div onClick={onProfileClick} className="flex items-center gap-3 cursor-pointer group pl-2">
+              <div className="text-right hidden xl:block">
+                <p className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors">{userName}</p>
+              </div>
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 rounded-full blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="h-8 w-8 md:h-10 md:w-10 rounded-full border border-border-light dark:border-border-dark bg-gray-100 dark:bg-surface-dark-2 flex items-center justify-center relative z-10 transition-all duration-300 group-hover:border-primary">
+                  <span className="material-symbols-outlined text-gray-500 dark:text-gray-400 group-hover:text-primary">person</span>
+                </div>
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-background-dark rounded-full z-20"></div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <button
+            onClick={onLoginClick}
+            className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest shadow-glow active:scale-95 transition-all"
+          >
+            <span className="material-symbols-outlined text-sm">login</span>
+            <span className="hidden sm:inline">Entrar</span>
+          </button>
+        )}
       </div>
     </header>
   );
