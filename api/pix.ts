@@ -22,50 +22,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
     }
 
-    // Gerar token de autenticação Basic
-    const credentials = Buffer.from(`${publicKey}:${secretKey}`).toString('base64');
-
-    // Tentar extrair o ID da empresa da chave pública
-    let companyId = '';
-    if (publicKey.includes('_')) {
-        companyId = publicKey.split('_')[0];
-    }
-
-    // Preparar payload com todas as variações de credenciais
+    // Preparar payload conforme documentação oficial
     const payload = {
-        ...req.body,
-        client_id: publicKey,
-        client_secret: secretKey,
-        public_key: publicKey,
-        secret_key: secretKey,
-        request_token: secretKey,
-        company: companyId || undefined,
-        company_id: companyId || undefined,
-        account_id: companyId || undefined,
-        ci: publicKey,
-        cs: secretKey
+        identifier: req.body.identifier,
+        amount: req.body.amount,
+        client: req.body.client,
+        products: req.body.products,
+        metadata: req.body.metadata
     };
 
     console.log('SigiloPay Request:', {
         publicKeyPrefix: publicKey.substring(0, 10) + '...',
-        companyId: companyId || 'not extracted',
-        identifier: req.body?.identifier
+        identifier: req.body?.identifier,
+        amount: req.body?.amount
     });
 
     try {
-        const response = await fetch('https://app.sigilopay.com.br/api/v1/gateway/pix/qrcode', {
+        // Endpoint correto conforme documentação: /pix/receive
+        const response = await fetch('https://app.sigilopay.com.br/api/v1/gateway/pix/receive', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Basic ${credentials}`,
-                'X-Public-Key': publicKey,
-                'X-Secret-Key': secretKey,
-                'Client-ID': publicKey,
-                'Client-Secret': secretKey,
-                'x-client-id': publicKey,
-                'x-client-secret': secretKey,
-                'ci': publicKey,
-                'cs': secretKey
+                'x-public-key': publicKey,
+                'x-secret-key': secretKey
             },
             body: JSON.stringify(payload)
         });
