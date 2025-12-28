@@ -52,8 +52,18 @@ export const generatePix = async (data: SigiloPayPixRequest): Promise<SigiloPayP
     // Generate Basic Auth token
     const credentials = btoa(`${publicKey}:${secretKey}`);
 
+    // Estratégia "Shotgun": Enviar chaves no Header (Basic Auth + Custom) e no Body/Query
+    // Algumas APIs esperam client_id/secret dentro do JSON
+    const payload = {
+        ...data,
+        client_id: publicKey,
+        client_secret: secretKey,
+        'public_key': publicKey,
+        'secret_key': secretKey
+    };
+
     try {
-        const response = await axios.post<SigiloPayPixResponse>(PROXY_PATH, data, {
+        const response = await axios.post<SigiloPayPixResponse>(PROXY_PATH, payload, {
             headers: {
                 'Content-Type': 'application/json',
                 // Basic Auth Standard
