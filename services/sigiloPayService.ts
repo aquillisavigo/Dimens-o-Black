@@ -31,72 +31,80 @@ export interface SigiloPayPixResponse {
 
 // --- SERVICE ---
 
-// Usando o Proxy interno do Vite (configurado no vite.config.ts)
-// Isso resolve o erro de REDE (CORS) localmente de forma definitiva.
-// SuitPay/Amplo standard endpoint for QR Code generation
-const PROXY_PATH = '/sigilopay-api/api/v1/gateway/pix/qrcode';
+// Determinar o endpoint correto baseado no ambiente
+const isDev = import.meta.env.DEV;
+
+// Em desenvolvimento: usa o proxy do Vite
+// Em produção: usa a Serverless Function da Vercel
+const API_ENDPOINT = isDev
+    ? '/sigilopay-api/api/v1/gateway/pix/qrcode'  // Proxy local do Vite
+    : '/api/pix';  // Serverless Function da Vercel
 
 export const generatePix = async (data: SigiloPayPixRequest): Promise<SigiloPayPixResponse> => {
-    const publicKey = import.meta.env.VITE_SIGILOPAY_PUBLIC_KEY?.trim();
-    const secretKey = import.meta.env.VITE_SIGILOPAY_SECRET_KEY?.trim();
+    // Em produção, a autenticação é feita na Serverless Function
+    // Em desenvolvimento, enviamos as credenciais diretamente
 
-    if (!publicKey || !secretKey) {
-        throw new Error('Chaves da SigiloPay não configuradas. Verifique o arquivo .env.local');
-    }
-
-    // Debug: Log key prefix to verify loaded values
-    console.log('Sending Pix Request with keys:', {
-        public: publicKey.substring(0, 10) + '...',
-        secret: secretKey.substring(0, 4) + '...'
-    });
-
-    // Generate Basic Auth token
-    const credentials = btoa(`${publicKey}:${secretKey}`);
-
-    // Estratégia "Shotgun" V2: Tentar extrair o ID da empresa da chave
-    // Formato provável: "nomedaempresa_hash" -> company: "nomedaempresa"
-    let companyId = '';
-    if (publicKey && publicKey.includes('_')) {
-        companyId = publicKey.split('_')[0];
-    }
-
-    const payload = {
-        ...data,
-        // Standard fields
-        client_id: publicKey,
-        client_secret: secretKey,
-        // Common variations
-        'public_key': publicKey,
-        'secret_key': secretKey,
-        'request_token': secretKey,
-        'company': companyId || undefined,     // Tentar enviar o nome da empresa
-        'company_id': companyId || undefined,  // Tentar enviar o ID da empresa
-        'account_id': companyId || undefined,  // Tentar enviar o ID da conta
-        // SuitPay/Amplo variations
-        'ci': publicKey,
-        'cs': secretKey
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
     };
 
-    try {
-        const response = await axios.post<SigiloPayPixResponse>(PROXY_PATH, payload, {
-            headers: {
-                'Content-Type': 'application/json',
-                // Basic Auth Standard
-                'Authorization': `Basic ${credentials}`,
+    let payload: any = { ...data };
 
-                // Keep explicit headers as fallback
-                'X-Public-Key': publicKey,
-                'X-Secret-Key': secretKey,
-                'Client-ID': publicKey,
-                'Client-Secret': secretKey,
-                'x-client-id': publicKey,
-                'x-client-secret': secretKey,
-                // SuitPay/Amplo specific
-                'ci': publicKey,
-                'cs': secretKey
-            },
+    // Apenas em desenvolvimento precisamos enviar as credenciais do cliente
+    if (isDev) {
+        const publicKey = import.meta.env.VITE_SIGILOPAY_PUBLIC_KEY?.trim();
+        const secretKey = import.meta.env.VITE_SIGILOPAY_SECRET_KEY?.trim();
+
+        if (!publicKey || !secretKey) {
+            throw new Error('Chaves da SigiloPay não configuradas. Verifique o arquivo .env.local');
+        }
+
+        // Debug: Log key prefix to verify loaded values
+        console.log('DEV Mode - Sending Pix Request with keys:', {
+            public: publicKey.substring(0, 10) + '...',
+            secret: secretKey.substring(0, 4) + '...'
         });
 
+        // Generate Basic Auth token
+        const credentials = btoa(`${publicKey}:${secretKey}`);
+
+        // Extrair company ID da chave pública
+        let companyId = '';
+        if (publicKey.includes('_')) {
+            companyId = publicKey.split('_')[0];
+        }
+
+        // Adicionar headers de autenticação
+        headers['Authorization'] = `Basic ${credentials}`;
+        headers['X-Public-Key'] = publicKey;
+        headers['X-Secret-Key'] = secretKey;
+        headers['Client-ID'] = publicKey;
+        headers['Client-Secret'] = secretKey;
+        headers['x-client-id'] = publicKey;
+        headers['x-client-secret'] = secretKey;
+        headers['ci'] = publicKey;
+        headers['cs'] = secretKey;
+
+        // Adicionar credenciais ao payload
+        payload = {
+            ...payload,
+            client_id: publicKey,
+            client_secret: secretKey,
+            public_key: publicKey,
+            secret_key: secretKey,
+            request_token: secretKey,
+            company: companyId || undefined,
+            company_id: companyId || undefined,
+            account_id: companyId || undefined,
+            ci: publicKey,
+            cs: secretKey
+        };
+    } else {
+        console.log('PROD Mode - Using Serverless Function at /api/pix');
+    }
+
+    try {
+        const response = await axios.post<SigiloPayPixResponse>(API_ENDPOINT, payload, { headers });
         return response.data;
     } catch (error: any) {
         if (axios.isAxiosError(error) && error.response) {
@@ -104,19 +112,13 @@ export const generatePix = async (data: SigiloPayPixRequest): Promise<SigiloPayP
             const status = error.response.status;
 
             if (status === 400 && apiError.error === 'Company not found') {
-                throw new Error(`Erro de Autenticação (Company not found): As chaves informadas não foram reconhecidas. Verifique se copiou corretamente "VITE_SIGILOPAY_PUBLIC_KEY" e "VITE_SIGILOPAY_SECRET_KEY". (Public Key enviada iniciando com: ${publicKey.substring(0, 5)}...)`);
+                throw new Error(`Erro de Autenticação (Company not found): As chaves informadas não foram reconhecidas. Verifique as variáveis de ambiente na Vercel.`);
             }
 
-            // Include status code and raw data for debugging
-            throw new Error(`Erro SigiloPay (${status}): ${apiError.message || JSON.stringify(apiError) || 'Sem mensagem de erro'}`);
+            throw new Error(`Erro SigiloPay (${status}): ${apiError.message || apiError.error || JSON.stringify(apiError)}`);
         }
+
         console.error('Erro na requisição Pix:', error);
-
-        // Verifica se o erro é relacionado a chaves (frequentemente 401 ou 403, mas aqui pegamos erros genéricos de conexão/config)
-        if (!publicKey || !secretKey) {
-            throw new Error('Chaves da SigiloPay NÃO configuradas. No Vercel, vá em Settings > Environment Variables e configure VITE_SIGILOPAY_PUBLIC_KEY e VITE_SIGILOPAY_SECRET_KEY.');
-        }
-
-        throw new Error('Erro de conexão ou configuração. Verifique se as chaves da SigiloPay estão corretas no Vercel (Environment Variables).');
+        throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
     }
 };
