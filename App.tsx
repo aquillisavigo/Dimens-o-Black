@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import { ActiveTab } from './types';
 import { supabase } from './supabaseClient';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // Views
 import LoginView from './views/LoginView';
@@ -297,6 +298,7 @@ const App: React.FC = () => {
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 transition-colors duration-300">
       {toast && <Toast message={toast.message} type={toast.type} />}
       <SocialProofPopup />
+      <SpeedInsights />
 
       <Sidebar
         isOpen={isSidebarOpen}

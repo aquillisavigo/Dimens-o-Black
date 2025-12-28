@@ -233,21 +233,21 @@ const AdminView: React.FC = () => {
     return (
         <div className="space-y-10 animate-in fade-in duration-500 pb-20">
             {/* Header */}
-            <div className="header-admin bg-gradient-to-r from-red-950/40 to-black p-10 rounded-[2.5rem] border border-red-500/20 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="header-admin bg-gradient-to-r from-red-950/40 to-black p-6 md:p-10 rounded-[2.5rem] border border-red-500/20 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h2 className="text-4xl font-display font-bold text-white uppercase tracking-tighter">
+                    <h2 className="text-2xl md:text-4xl font-display font-bold text-white uppercase tracking-tighter">
                         Central do <span className="text-primary text-glow">Administrador</span>
                     </h2>
                     <p className="text-gray-500 uppercase text-[10px] font-bold tracking-[0.3em] mt-2">Gestão de Inventário e Solicitações</p>
                 </div>
 
-                <div className="flex bg-black/40 p-1 rounded-2xl border border-white/5">
-                    <button onClick={() => setActiveTab('products')} className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'products' ? 'bg-primary text-white shadow-glow' : 'text-gray-500 hover:text-white'}`}>Produtos</button>
-                    <button onClick={() => setActiveTab('requests')} className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all relative ${activeTab === 'requests' ? 'bg-primary text-white shadow-glow' : 'text-gray-500 hover:text-white'}`}>
+                <div className="flex flex-col md:flex-row bg-black/40 p-1 rounded-2xl border border-white/5 gap-1 md:gap-0">
+                    <button onClick={() => setActiveTab('products')} className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all w-full md:w-auto ${activeTab === 'products' ? 'bg-primary text-white shadow-glow' : 'text-gray-500 hover:text-white'}`}>Produtos</button>
+                    <button onClick={() => setActiveTab('requests')} className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all relative w-full md:w-auto ${activeTab === 'requests' ? 'bg-primary text-white shadow-glow' : 'text-gray-500 hover:text-white'}`}>
                         Solicitações
                         {requests.filter(r => r.status === 'pending').length > 0 && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-black animate-pulse"></span>}
                     </button>
-                    <button onClick={() => setActiveTab('balance')} className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'balance' ? 'bg-primary text-white shadow-glow' : 'text-gray-500 hover:text-white'}`}>Gestão de Saldo</button>
+                    <button onClick={() => setActiveTab('balance')} className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all w-full md:w-auto ${activeTab === 'balance' ? 'bg-primary text-white shadow-glow' : 'text-gray-500 hover:text-white'}`}>Gestão de Saldo</button>
                 </div>
             </div>
 

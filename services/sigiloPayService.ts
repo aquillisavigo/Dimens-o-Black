@@ -56,9 +56,17 @@ export const generatePix = async (data: SigiloPayPixRequest): Promise<SigiloPayP
     } catch (error: any) {
         if (axios.isAxiosError(error) && error.response) {
             const apiError = error.response.data as any;
-            throw new Error(apiError.message || 'Erro ao processar Pix na SigiloPay');
+            const status = error.response.status;
+            // Include status code and raw data for debugging
+            throw new Error(`Erro SigiloPay (${status}): ${apiError.message || JSON.stringify(apiError) || 'Sem mensagem de erro'}`);
         }
         console.error('Erro na requisição Pix:', error);
-        throw new Error('Erro de conexão. Certifique-se de que o servidor local foi reiniciado após a alteração das chaves.');
+
+        // Verifica se o erro é relacionado a chaves (frequentemente 401 ou 403, mas aqui pegamos erros genéricos de conexão/config)
+        if (!publicKey || !secretKey) {
+            throw new Error('Chaves da SigiloPay NÃO configuradas. No Vercel, vá em Settings > Environment Variables e configure VITE_SIGILOPAY_PUBLIC_KEY e VITE_SIGILOPAY_SECRET_KEY.');
+        }
+
+        throw new Error('Erro de conexão ou configuração. Verifique se as chaves da SigiloPay estão corretas no Vercel (Environment Variables).');
     }
 };
