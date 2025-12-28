@@ -35,7 +35,7 @@ const BlackMoneyView: React.FC<BlackMoneyViewProps> = ({
         setPixData(null);
 
         try {
-            const identifier = `db-${Date.now()}`;
+            const identifier = `db-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
             const response = await generatePix({
                 identifier,

@@ -36,19 +36,25 @@ export interface SigiloPayPixResponse {
 const PROXY_PATH = '/sigilopay-api/api/v1/gateway/pix/receive';
 
 export const generatePix = async (data: SigiloPayPixRequest): Promise<SigiloPayPixResponse> => {
-    const publicKey = import.meta.env.VITE_SIGILOPAY_PUBLIC_KEY;
-    const secretKey = import.meta.env.VITE_SIGILOPAY_SECRET_KEY;
+    const publicKey = import.meta.env.VITE_SIGILOPAY_PUBLIC_KEY?.trim();
+    const secretKey = import.meta.env.VITE_SIGILOPAY_SECRET_KEY?.trim();
 
     if (!publicKey || !secretKey) {
         throw new Error('Chaves da SigiloPay não configuradas. Verifique o arquivo .env.local');
     }
 
+    // Debug: Log key prefix to verify loaded values
+    console.log('Sending Pix Request with keys:', {
+        public: publicKey.substring(0, 10) + '...',
+        secret: secretKey.substring(0, 4) + '...'
+    });
+
     try {
         const response = await axios.post<SigiloPayPixResponse>(PROXY_PATH, data, {
             headers: {
                 'Content-Type': 'application/json',
-                'x-public-key': publicKey,
-                'x-secret-key': secretKey,
+                'X-Public-Key': publicKey,
+                'X-Secret-Key': secretKey,
             },
         });
 
@@ -57,6 +63,11 @@ export const generatePix = async (data: SigiloPayPixRequest): Promise<SigiloPayP
         if (axios.isAxiosError(error) && error.response) {
             const apiError = error.response.data as any;
             const status = error.response.status;
+
+            if (status === 400 && apiError.error === 'Company not found') {
+                throw new Error(`Erro de Autenticação (Company not found): As chaves informadas não foram reconhecidas. Verifique se copiou corretamente "VITE_SIGILOPAY_PUBLIC_KEY" e "VITE_SIGILOPAY_SECRET_KEY". (Public Key enviada iniciando com: ${publicKey.substring(0, 5)}...)`);
+            }
+
             // Include status code and raw data for debugging
             throw new Error(`Erro SigiloPay (${status}): ${apiError.message || JSON.stringify(apiError) || 'Sem mensagem de erro'}`);
         }
