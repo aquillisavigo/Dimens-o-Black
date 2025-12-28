@@ -33,7 +33,8 @@ export interface SigiloPayPixResponse {
 
 // Usando o Proxy interno do Vite (configurado no vite.config.ts)
 // Isso resolve o erro de REDE (CORS) localmente de forma definitiva.
-const PROXY_PATH = '/sigilopay-api/api/v1/gateway/pix/receive';
+// SuitPay/Amplo standard endpoint for QR Code generation
+const PROXY_PATH = '/sigilopay-api/api/v1/gateway/pix/qrcode';
 
 export const generatePix = async (data: SigiloPayPixRequest): Promise<SigiloPayPixResponse> => {
     const publicKey = import.meta.env.VITE_SIGILOPAY_PUBLIC_KEY?.trim();
