@@ -49,12 +49,23 @@ export const generatePix = async (data: SigiloPayPixRequest): Promise<SigiloPayP
         secret: secretKey.substring(0, 4) + '...'
     });
 
+    // Generate Basic Auth token
+    const credentials = btoa(`${publicKey}:${secretKey}`);
+
     try {
         const response = await axios.post<SigiloPayPixResponse>(PROXY_PATH, data, {
             headers: {
                 'Content-Type': 'application/json',
+                // Basic Auth Standard
+                'Authorization': `Basic ${credentials}`,
+
+                // Keep explicit headers as fallback
                 'X-Public-Key': publicKey,
                 'X-Secret-Key': secretKey,
+                'Client-ID': publicKey,
+                'Client-Secret': secretKey,
+                'x-client-id': publicKey,
+                'x-client-secret': secretKey
             },
         });
 
