@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
 const AdminView: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'balance' | 'settings'>('products');
+    const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'balance' | 'settings' | 'history'>('products');
     const [products, setProducts] = useState<any[]>([]);
     const [requests, setRequests] = useState<any[]>([]);
+    const [transactions, setTransactions] = useState<any[]>([]); // New state for history
     const [loading, setLoading] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any>(null);
 
@@ -40,6 +41,8 @@ const AdminView: React.FC = () => {
             fetchUsers();
         } else if (activeTab === 'settings') {
             fetchConfig();
+        } else if (activeTab === 'history') {
+            fetchTransactions();
         }
     }, [activeTab]);
 
@@ -95,6 +98,31 @@ const AdminView: React.FC = () => {
             .eq('key', 'whatsapp_group_link')
             .single();
         if (data) setWhatsappLinkEdit(data.value);
+    };
+
+    const fetchTransactions = async () => {
+        setLoading(true);
+        try {
+            const { data, error } = await supabase.rpc('get_all_transactions_admin');
+
+            if (error) {
+                console.error('Error fetching transactions:', error);
+                alert('Erro ao buscar histórico: ' + error.message);
+            } else if (data) {
+                const formatted = data.map((t: any) => ({
+                    id: t.transaction_id,
+                    date: t.created_at,
+                    type: t.type,
+                    user_name: t.user_name,
+                    details: t.details,
+                    value: Number(t.value)
+                }));
+                setTransactions(formatted);
+            }
+        } catch (err) {
+            console.error('Fetch error:', err);
+        }
+        setLoading(false);
     };
 
     const handleSaveConfig = async (e: React.FormEvent) => {
@@ -292,6 +320,7 @@ const AdminView: React.FC = () => {
                         {requests.filter(r => r.status === 'pending').length > 0 && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-black animate-pulse"></span>}
                     </button>
                     <button onClick={() => setActiveTab('balance')} className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all w-full md:w-auto ${activeTab === 'balance' ? 'bg-primary text-white shadow-glow' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>Gestão de Saldo</button>
+                    <button onClick={() => setActiveTab('history')} className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all w-full md:w-auto ${activeTab === 'history' ? 'bg-primary text-white shadow-glow' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>Histórico</button>
                     <button onClick={() => setActiveTab('settings')} className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all w-full md:w-auto ${activeTab === 'settings' ? 'bg-primary text-white shadow-glow' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>Configurações</button>
                 </div>
             </div>
@@ -517,6 +546,62 @@ const AdminView: React.FC = () => {
                             {loading ? 'Salvando...' : 'Atualizar Link'}
                         </button>
                     </form>
+                </div>
+            )}
+
+            {activeTab === 'history' && (
+                <div className="bg-white/80 dark:bg-surface-dark/50 backdrop-blur-xl border border-gray-200 dark:border-white/5 p-10 rounded-[2.5rem] shadow-xl transition-colors duration-300">
+                    <h3 className="text-gray-900 dark:text-white font-bold uppercase text-xs tracking-widest mb-10 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary">history</span>
+                        Histórico de Transações
+                    </h3>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200 dark:border-white/5">
+                                    <th className="pb-6 px-4">Data</th>
+                                    <th className="pb-6 px-4">Usuário</th>
+                                    <th className="pb-6 px-4">Tipo</th>
+                                    <th className="pb-6 px-4">Detalhes</th>
+                                    <th className="pb-6 px-4">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                                {transactions.map((t) => (
+                                    <tr key={t.id} className="group hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                        <td className="py-6 px-4">
+                                            <div className="text-gray-700 dark:text-gray-300 text-xs font-mono">{new Date(t.date).toLocaleString('pt-BR')}</div>
+                                        </td>
+                                        <td className="py-6 px-4">
+                                            <div className="text-gray-900 dark:text-white font-bold text-sm">{t.user_name}</div>
+                                        </td>
+                                        <td className="py-6 px-4">
+                                            <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${t.type === 'recharge'
+                                                ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20'
+                                                : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+                                                }`}>
+                                                {t.type === 'recharge' ? 'RECARGA' : 'COMPRA'}
+                                            </span>
+                                        </td>
+                                        <td className="py-6 px-4">
+                                            <div className="text-gray-600 dark:text-gray-400 text-xs">{t.details}</div>
+                                        </td>
+                                        <td className="py-6 px-4">
+                                            <div className={`font-bold text-sm ${t.value > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                {t.value > 0 ? '+' : ''}{t.value.toFixed(2)} DC
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {transactions.length === 0 && (
+                            <div className="text-center py-20 text-gray-500 text-[10px] uppercase font-bold tracking-widest">
+                                {loading ? 'Carregando transações...' : 'Nenhum registro encontrado'}
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

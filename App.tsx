@@ -321,7 +321,7 @@ const App: React.FC = () => {
       case 'downloads':
         if (!session) { setShowLogin(true); return null; }
         return <MyDownloadsView userId={session?.user?.id} />;
-      case 'afiliados':
+      case 'affiliates':
         if (!session) { setShowLogin(true); return null; }
         return <AffiliateDashboardView profile={profile} onToast={showToast} />;
       default:
