@@ -18,6 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, activeTab, onTabChan
     { id: 'profile', label: 'Meu Perfil', icon: 'person', category: 'PAINEL' },
     { id: 'downloads', label: 'Downloads', icon: 'cloud_download', category: 'PAINEL' },
     { id: 'black-money', label: 'Dark Coins', icon: 'payments', category: 'FINANCEIRO' },
+    { id: 'afiliados', label: 'Afiliados', icon: 'campaign', category: 'FINANCEIRO' },
     { id: 'ofertas-clonadas', label: 'Ofertas Clonadas', icon: 'local_fire_department', category: 'FERRAMENTAS' },
     { id: 'clonagem', label: 'Solicitar Clonagem', icon: 'content_copy', category: 'FERRAMENTAS' },
     { id: 'temas', label: 'Temas Shopify', icon: 'storefront', category: 'FERRAMENTAS' },
@@ -56,6 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, activeTab, onTabChan
           {['PAINEL', 'FERRAMENTAS', 'FINANCEIRO', 'ASSINATURA', 'GESTAO'].map(category => {
             const items = menuItems.filter(item => {
               if (item.id === 'admin' && !profile?.is_admin) return false;
+              if (item.id === 'afiliados' && !profile) return false;
               return item.category === category;
             });
             if (items.length === 0) return null;

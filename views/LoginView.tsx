@@ -42,6 +42,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onToast }) => {
         data: {
           full_name: fullName,
           document: document,
+          referral_code: localStorage.getItem('referral_code'),
         },
       },
     });

@@ -18,6 +18,7 @@ import AdminView from './views/AdminView';
 import MyDownloadsView from './views/MyDownloadsView';
 import TemasView from './views/TemasView';
 import SolicitarClonagemView from './views/SolicitarClonagemView';
+import AffiliateDashboardView from './views/AffiliateDashboardView';
 import SocialProofPopup from './components/SocialProofPopup';
 
 // Sistema de Notificação (Toast)
@@ -45,7 +46,7 @@ const App: React.FC = () => {
   // Navegação baseada em Hash
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
     const hash = window.location.hash.replace('#', '') as ActiveTab;
-    const validTabs: ActiveTab[] = ['dashboard', 'black-money', 'temas', 'clonagem', 'planos', 'forum', 'networking', 'ofertas-clonadas', 'profile', 'kl-remotas', 'admin', 'downloads'];
+    const validTabs: ActiveTab[] = ['dashboard', 'black-money', 'temas', 'clonagem', 'planos', 'forum', 'networking', 'ofertas-clonadas', 'profile', 'kl-remotas', 'admin', 'downloads', 'afiliados'];
     return validTabs.includes(hash) ? hash : 'dashboard';
   });
 
@@ -141,6 +142,17 @@ const App: React.FC = () => {
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Capture Referral Code from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get('ref');
+    if (refCode) {
+      localStorage.setItem('referral_code', refCode);
+      // Optional: Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+    }
   }, []);
 
   const toggleTheme = async () => {
@@ -308,6 +320,9 @@ const App: React.FC = () => {
       case 'downloads':
         if (!session) { setShowLogin(true); return null; }
         return <MyDownloadsView userId={session?.user?.id} />;
+      case 'afiliados':
+        if (!session) { setShowLogin(true); return null; }
+        return <AffiliateDashboardView profile={profile} onToast={showToast} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20 animate-in fade-in duration-500">
