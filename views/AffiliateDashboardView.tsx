@@ -34,31 +34,53 @@ const AffiliateDashboardView: React.FC<AffiliateDashboardProps> = ({ onToast, pr
         setLoading(true);
 
         // 1. Fetch Purchases/History
-        // Note: We need a way to get "indicated user". 
-        // Usually we join purchases with profiles (User who bought).
-        const { data, error } = await supabase
+        // We will fetch user_id directly and then fetch profile names manually to avoid FK issues.
+        const { data: purchasesData, error: purchasesError } = await supabase
             .from('purchases')
             .select(`
-        created_at,
-        price_paid,
-        affiliate_commission,
-        status,
-        profiles!purchases_user_id_fkey(full_name) 
-      `)
+                created_at,
+                price_paid,
+                affiliate_commission,
+                status,
+                user_id
+            `)
             .eq('referrer_id', profile.id)
             .order('created_at', { ascending: false });
 
-        if (error) {
-            console.error('Error fetching affiliate history:', error);
-            if (onToast) onToast('Erro ao carregar histórico.', 'error');
-        } else if (data) {
-            const formattedHistory: PurchaseHistory[] = data.map((item: any) => ({
-                date: new Date(item.created_at).toLocaleDateString('pt-BR'),
-                user_name: item.profiles?.full_name || 'Usuário Anônimo',
-                amount: Number(item.price_paid),
-                commission: Number(item.affiliate_commission),
-                status: item.status || 'pending'
-            }));
+        if (purchasesError) {
+            console.error('Error fetching affiliate history:', purchasesError);
+            if (onToast) onToast(`Erro ao carregar histórico: ${purchasesError.message}`, 'error');
+        } else if (purchasesData) {
+            // Manual join to get user names
+            let formattedHistory: PurchaseHistory[] = [];
+
+            if (purchasesData.length > 0) {
+                const userIds = [...new Set(purchasesData.map(p => p.user_id).filter(Boolean))];
+
+                let profilesMap: Record<string, string> = {};
+
+                if (userIds.length > 0) {
+                    const { data: profilesData } = await supabase
+                        .from('profiles')
+                        .select('id, full_name')
+                        .in('id', userIds);
+
+                    if (profilesData) {
+                        profilesData.forEach(p => {
+                            profilesMap[p.id] = p.full_name;
+                        });
+                    }
+                }
+
+                formattedHistory = purchasesData.map((item: any) => ({
+                    date: new Date(item.created_at).toLocaleDateString('pt-BR'),
+                    user_name: profilesMap[item.user_id] || 'Usuário',
+                    amount: Number(item.price_paid),
+                    commission: Number(item.affiliate_commission),
+                    status: item.status || 'pending'
+                }));
+            }
+
             setHistory(formattedHistory);
 
             // Calculate Confirmed Sales for Goals
@@ -117,7 +139,7 @@ const AffiliateDashboardView: React.FC<AffiliateDashboardProps> = ({ onToast, pr
         return (
             <div className={`relative p-5 rounded-2xl border transition-all duration-300 ${isCompleted
                 ? 'bg-green-500/10 border-green-500/30'
-                : 'bg-surface-dark-2 border-border-dark'}`}>
+                : 'bg-white dark:bg-surface-dark-2 border-gray-200 dark:border-border-dark'}`}>
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isCompleted ? 'bg-green-500 text-white' : 'bg-primary/10 text-primary'}`}>
@@ -125,24 +147,24 @@ const AffiliateDashboardView: React.FC<AffiliateDashboardProps> = ({ onToast, pr
                         </div>
                         <div>
                             <p className="text-xs font-bold uppercase tracking-wider text-gray-500">{label}</p>
-                            <p className="text-lg font-bold text-white">R$ {reward},00</p>
+                            <p className="text-lg font-bold text-gray-900 dark:text-white">R$ {reward},00</p>
                         </div>
                     </div>
                     <div className="text-right">
-                        <span className={`text-2xl font-bold ${isCompleted ? 'text-green-500' : 'text-gray-400'}`}>
+                        <span className={`text-2xl font-bold ${isCompleted ? 'text-green-600 dark:text-green-500' : 'text-gray-400'}`}>
                             {confirmedSalesCount}/{target}
                         </span>
                     </div>
                 </div>
 
                 {/* Progress Bar */}
-                <div className="w-full h-2 bg-black/30 rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-gray-200 dark:bg-black/30 rounded-full overflow-hidden">
                     <div
                         className={`h-full rounded-full transition-all duration-1000 ${isCompleted ? 'bg-green-500' : 'bg-primary'}`}
                         style={{ width: `${progress}%` }}
                     ></div>
                 </div>
-                {isCompleted && <div className="mt-2 text-[10px] text-green-500 font-bold uppercase tracking-widest text-center animate-pulse">Meta Concluída • Recompensa Paga</div>}
+                {isCompleted && <div className="mt-2 text-[10px] text-green-600 dark:text-green-500 font-bold uppercase tracking-widest text-center animate-pulse">Meta Concluída • Recompensa Paga</div>}
             </div>
         );
     };
@@ -154,10 +176,10 @@ const AffiliateDashboardView: React.FC<AffiliateDashboardProps> = ({ onToast, pr
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-3xl font-display font-bold text-white uppercase tracking-wider">Painel de <span className="text-primary">Afiliado</span></h2>
+                    <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white uppercase tracking-wider transition-colors">Painel de <span className="text-primary">Afiliado</span></h2>
                     <p className="text-gray-500 text-sm mt-1">Gerencie suas indicações e comissões.</p>
                 </div>
-                <div className="bg-primary/20 text-primary px-4 py-2 rounded-xl border border-primary/20 text-xs font-bold uppercase tracking-widest animate-pulse">
+                <div className="bg-primary/10 dark:bg-primary/20 text-primary px-4 py-2 rounded-xl border border-primary/20 text-xs font-bold uppercase tracking-widest animate-pulse">
                     Comissão Padrão: 30%
                 </div>
             </div>
@@ -165,32 +187,32 @@ const AffiliateDashboardView: React.FC<AffiliateDashboardProps> = ({ onToast, pr
             {/* Section 1: Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Saldo Disponível */}
-                <div className="bg-surface-dark-2 border border-border-dark p-6 rounded-3xl relative overflow-hidden group">
+                <div className="bg-white dark:bg-surface-dark-2 border border-gray-200 dark:border-border-dark p-6 rounded-3xl relative overflow-hidden group transition-colors duration-300">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <span className="material-symbols-outlined text-6xl text-green-500">account_balance_wallet</span>
                     </div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Saldo de Comissões</p>
-                    <h3 className="text-3xl font-bold text-white mb-4">R$ {Number(profile?.affiliate_balance || 0).toFixed(2)}</h3>
+                    <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Saldo de Comissões</p>
+                    <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">R$ {Number(profile?.affiliate_balance || 0).toFixed(2)}</h3>
                     <p className="text-[10px] text-gray-500">Disponível para uso imediato em compras.</p>
                 </div>
 
                 {/* Indicações Confirmadas */}
-                <div className="bg-surface-dark-2 border border-border-dark p-6 rounded-3xl relative overflow-hidden group">
+                <div className="bg-white dark:bg-surface-dark-2 border border-gray-200 dark:border-border-dark p-6 rounded-3xl relative overflow-hidden group transition-colors duration-300">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <span className="material-symbols-outlined text-6xl text-blue-500">group_add</span>
                     </div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Vendas Confirmadas</p>
-                    <h3 className="text-3xl font-bold text-white mb-4">{confirmedSalesCount}</h3>
+                    <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Vendas Confirmadas</p>
+                    <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">{confirmedSalesCount}</h3>
                     <p className="text-[10px] text-gray-500">Apenas compras pagas contam.</p>
                 </div>
 
                 {/* Total Ganho */}
-                <div className="bg-surface-dark-2 border border-border-dark p-6 rounded-3xl relative overflow-hidden group">
+                <div className="bg-white dark:bg-surface-dark-2 border border-gray-200 dark:border-border-dark p-6 rounded-3xl relative overflow-hidden group transition-colors duration-300">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <span className="material-symbols-outlined text-6xl text-yellow-500">payments</span>
                     </div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Ganho</p>
-                    <h3 className="text-3xl font-bold text-white mb-4">R$ {Number(profile?.affiliate_total_earnings || totalEarnings).toFixed(2)}</h3>
+                    <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Total Ganho</p>
+                    <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">R$ {Number(profile?.affiliate_total_earnings || totalEarnings).toFixed(2)}</h3>
                     <p className="text-[10px] text-gray-500">Histórico vitalício.</p>
                 </div>
             </div>
@@ -204,14 +226,14 @@ const AffiliateDashboardView: React.FC<AffiliateDashboardProps> = ({ onToast, pr
             </div>
 
             {/* Section 2: Link de Indicação */}
-            <div className="bg-surface-dark-2 border border-border-dark p-8 rounded-3xl">
-                <h3 className="text-lg font-bold text-white uppercase tracking-wider mb-6 flex items-center gap-2">
+            <div className="bg-white dark:bg-surface-dark-2 border border-gray-200 dark:border-border-dark p-8 rounded-3xl transition-colors duration-300">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-6 flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary">link</span> Seu Link Exclusivo
                 </h3>
 
-                <div className="flex flex-col md:flex-row gap-4 items-center bg-black/30 p-2 rounded-2xl border border-border-dark">
+                <div className="flex flex-col md:flex-row gap-4 items-center bg-gray-100 dark:bg-black/30 p-2 rounded-2xl border border-gray-200 dark:border-border-dark transition-colors">
                     <div className="flex-1 px-4 py-2 w-full overflow-hidden">
-                        <span className="text-gray-400 text-sm font-mono truncate block">
+                        <span className="text-gray-600 dark:text-gray-400 text-sm font-mono truncate block">
                             {window.location.origin}/?ref={profile?.affiliate_code || '...'}
                         </span>
                     </div>
@@ -219,7 +241,7 @@ const AffiliateDashboardView: React.FC<AffiliateDashboardProps> = ({ onToast, pr
                         <button onClick={copyLink} className="flex-1 md:flex-none px-6 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2">
                             <span className="material-symbols-outlined text-base">content_copy</span> Copiar
                         </button>
-                        <button onClick={shareLink} className="flex-1 md:flex-none px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <button onClick={shareLink} className="flex-1 md:flex-none px-6 py-3 bg-gray-200 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 text-gray-700 dark:text-white rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2">
                             <span className="material-symbols-outlined text-base">share</span>
                         </button>
                     </div>
@@ -231,7 +253,7 @@ const AffiliateDashboardView: React.FC<AffiliateDashboardProps> = ({ onToast, pr
 
             {/* Section 3: Metas */}
             <div className="space-y-4">
-                <h3 className="text-lg font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary">flag</span> Metas & Recompensas
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -244,9 +266,9 @@ const AffiliateDashboardView: React.FC<AffiliateDashboardProps> = ({ onToast, pr
             {/* Section 5: Uso do Saldo (Moved up for UX, or keep down) -> Prompt said Section 5 */}
 
             {/* Section 4: Histórico */}
-            <div className="bg-surface-dark-2 border border-border-dark rounded-3xl overflow-hidden">
-                <div className="p-6 border-b border-border-dark flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <div className="bg-white dark:bg-surface-dark-2 border border-gray-200 dark:border-border-dark rounded-3xl overflow-hidden transition-colors duration-300">
+                <div className="p-6 border-b border-gray-200 dark:border-border-dark flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary">history</span> Histórico de Comissões
                     </h3>
                 </div>
@@ -261,7 +283,7 @@ const AffiliateDashboardView: React.FC<AffiliateDashboardProps> = ({ onToast, pr
                     ) : (
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-border-dark text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                <tr className="border-b border-gray-200 dark:border-border-dark text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                                     <th className="p-4">Data</th>
                                     <th className="p-4">Indicado</th>
                                     <th className="p-4">Valor Compra</th>
@@ -271,14 +293,14 @@ const AffiliateDashboardView: React.FC<AffiliateDashboardProps> = ({ onToast, pr
                             </thead>
                             <tbody>
                                 {history.map((item, idx) => (
-                                    <tr key={idx} className="border-b border-border-dark/50 hover:bg-white/5 transition-colors text-sm text-gray-300">
+                                    <tr key={idx} className="border-b border-gray-100 dark:border-border-dark/50 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-sm text-gray-700 dark:text-gray-300">
                                         <td className="p-4">{item.date}</td>
-                                        <td className="p-4 font-bold text-white">{item.user_name}</td>
+                                        <td className="p-4 font-bold text-gray-900 dark:text-white">{item.user_name}</td>
                                         <td className="p-4">R$ {item.amount.toFixed(2)}</td>
-                                        <td className="p-4 text-green-400 font-bold">+ R$ {item.commission.toFixed(2)}</td>
+                                        <td className="p-4 text-green-600 dark:text-green-400 font-bold">+ R$ {item.commission.toFixed(2)}</td>
                                         <td className="p-4">
-                                            <span className={`px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-wider ${item.status === 'confirmed' ? 'bg-green-500/20 text-green-500' :
-                                                    item.status === 'refunded' ? 'bg-red-500/20 text-red-500' : 'bg-yellow-500/20 text-yellow-500'
+                                            <span className={`px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-wider ${item.status === 'confirmed' ? 'bg-green-500/20 text-green-600 dark:text-green-500' :
+                                                item.status === 'refunded' ? 'bg-red-500/20 text-red-600 dark:text-red-500' : 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-500'
                                                 }`}>
                                                 {item.status === 'confirmed' ? 'Confirmada' : item.status === 'refunded' ? 'Estornada' : 'Pendente'}
                                             </span>
@@ -292,20 +314,20 @@ const AffiliateDashboardView: React.FC<AffiliateDashboardProps> = ({ onToast, pr
             </div>
 
             {/* Section 5: Uso do Saldo */}
-            <div className="bg-gradient-to-br from-surface-dark-2 to-black border border-border-dark p-8 rounded-3xl">
+            <div className="bg-gradient-to-br from-gray-50 to-white dark:from-surface-dark-2 dark:to-black border border-gray-200 dark:border-border-dark p-8 rounded-3xl transition-colors duration-300">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                     <div>
-                        <h3 className="text-lg font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-2 flex items-center gap-2">
                             <span className="material-symbols-outlined text-primary">shopping_cart_checkout</span> Usar Saldo
                         </h3>
                         <p className="text-gray-500 text-sm max-w-lg">
                             Você pode utilizar seu saldo de afiliado para adquirir produtos e conteúdos dentro da plataforma. O saldo será convertido para <strong>Dark Coins</strong>.
                         </p>
                     </div>
-                    <div className="flex items-center gap-4 bg-black/40 p-4 rounded-xl border border-white/5">
+                    <div className="flex items-center gap-4 bg-gray-100 dark:bg-black/40 p-4 rounded-xl border border-gray-200 dark:border-white/5 transition-colors">
                         <div className="text-right">
-                            <p className="text-[10px] text-gray-400 uppercase tracking-widest">Disponível</p>
-                            <p className="text-xl font-bold text-white">R$ {Number(profile?.affiliate_balance || 0).toFixed(2)}</p>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest">Disponível</p>
+                            <p className="text-xl font-bold text-gray-900 dark:text-white">R$ {Number(profile?.affiliate_balance || 0).toFixed(2)}</p>
                         </div>
                         <button
                             onClick={() => handleConvertBalance(Number(profile?.affiliate_balance || 0))}

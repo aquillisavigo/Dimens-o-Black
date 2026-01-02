@@ -35,3 +35,16 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+
+@keyframes pulse-shadow-red {
+  0%, 100% {
+    box-shadow: 0 0 40px rgba(212, 0, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 80px rgba(212, 0, 0, 0.8), 0 0 20px rgba(212, 0, 0, 0.5) inset;
+  }
+}
+
+.animate-pulse-shadow-red {
+  animation: pulse-shadow-red 2s infinite ease-in-out;
+}

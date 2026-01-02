@@ -20,6 +20,7 @@ import TemasView from './views/TemasView';
 import SolicitarClonagemView from './views/SolicitarClonagemView';
 import AffiliateDashboardView from './views/AffiliateDashboardView';
 import SocialProofPopup from './components/SocialProofPopup';
+import WhatsAppPopup from './components/WhatsAppPopup';
 
 // Sistema de Notificação (Toast)
 const Toast: React.FC<{ message: string; type: 'success' | 'error' }> = ({ message, type }) => (
@@ -339,6 +340,7 @@ const App: React.FC = () => {
     <div className="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 transition-colors duration-300 relative">
       {toast && <Toast message={toast.message} type={toast.type} />}
       <SocialProofPopup />
+      <WhatsAppPopup />
       <SpeedInsights />
 
       {/* Login Overlay */}
