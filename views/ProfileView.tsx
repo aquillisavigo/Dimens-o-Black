@@ -52,9 +52,13 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile, onUpdate }) => {
 
                 <div className="flex flex-col md:flex-row items-center gap-12 relative z-10">
                     <div className="relative group">
-                        <div className="h-40 w-40 rounded-full border-[6px] border-primary p-2 transition-transform duration-500 group-hover:scale-105">
-                            <div className="h-full w-full rounded-full bg-gray-200 dark:bg-surface-dark-2 flex items-center justify-center overflow-hidden">
-                                <span className="material-symbols-outlined text-7xl text-gray-500 dark:text-gray-700">person</span>
+                        <div className="h-40 w-40 rounded-full border-[6px] border-primary transition-transform duration-500 group-hover:scale-105 shadow-xl overflow-hidden relative">
+                            <div className="h-full w-full bg-black flex items-center justify-center">
+                                <img
+                                    src="https://www.upload.ee/image/18931113/logo_do_site_e_nossa_logo_png.png"
+                                    alt="Avatar"
+                                    className="w-[135%] h-[135%] object-cover opacity-90"
+                                />
                             </div>
                         </div>
                         <div className="absolute -bottom-2 -right-2 bg-primary text-white p-3 rounded-2xl shadow-lg border border-white/20">
