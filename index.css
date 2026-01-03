@@ -7,20 +7,23 @@
         width: 8px;
         height: 8px;
     }
+
     ::-webkit-scrollbar-track {
         background: transparent;
     }
+
     ::-webkit-scrollbar-thumb {
         background: #333;
         border-radius: 4px;
     }
+
     ::-webkit-scrollbar-thumb:hover {
         background: #D40000;
     }
 }
 
 .text-glow {
-    text-shadow: 0 0 10px rgba(212,0,0,0.5);
+    text-shadow: 0 0 10px rgba(212, 0, 0, 0.5);
 }
 
 .shadow-glow {
@@ -37,14 +40,100 @@ body {
 }
 
 @keyframes pulse-shadow-red {
-  0%, 100% {
-    box-shadow: 0 0 40px rgba(212, 0, 0, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 80px rgba(212, 0, 0, 0.8), 0 0 20px rgba(212, 0, 0, 0.5) inset;
-  }
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px rgba(212, 0, 0, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 40px rgba(212, 0, 0, 0.5);
+    }
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes float-fast {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+@keyframes glow-pulse {
+
+    0%,
+    100% {
+        opacity: 0.8;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+        text-shadow: 0 0 20px currentColor;
+    }
 }
 
 .animate-pulse-shadow-red {
-  animation: pulse-shadow-red 2s infinite ease-in-out;
+    animation: pulse-shadow-red 3s infinite ease-in-out;
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-fast {
+    animation: float 5s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.hover-glow:hover {
+    box-shadow: 0 0 30px rgba(212, 0, 0, 0.4);
+    transform: translateY(-2px);
+}
+
+.card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    border-color: rgba(212, 0, 0, 0.3);
+}
+
+.dark .card-hover:hover {
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8);
+}
+
+/* Glassmorphism Utilities */
+.glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-strong {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
