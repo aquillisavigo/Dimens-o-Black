@@ -47,7 +47,7 @@ const App: React.FC = () => {
   // Navegação baseada em Hash
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
     const hash = window.location.hash.replace('#', '') as ActiveTab;
-    const validTabs: ActiveTab[] = ['dashboard', 'black-money', 'temas', 'clonagem', 'planos', 'forum', 'networking', 'ofertas-clonadas', 'profile', 'kl-remotas', 'admin', 'downloads', 'afiliados'];
+    const validTabs: ActiveTab[] = ['dashboard', 'black-money', 'temas', 'clonagem', 'planos', 'forum', 'networking', 'ofertas-clonadas', 'profile', 'kl-remotas', 'admin', 'downloads', 'affiliates'];
     return validTabs.includes(hash) ? hash : 'dashboard';
   });
 
