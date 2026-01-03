@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
 const AdminView: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'balance' | 'settings' | 'history'>('products');
+    const [activeTab, setActiveTab] = useState<'products' | 'requests' | 'balance' | 'settings' | 'history' | 'team'>('products');
     const [products, setProducts] = useState<any[]>([]);
     const [requests, setRequests] = useState<any[]>([]);
     const [transactions, setTransactions] = useState<any[]>([]); // New state for history
@@ -27,6 +27,9 @@ const AdminView: React.FC = () => {
     const [gtmId, setGtmId] = useState('');
     const [gtmActive, setGtmActive] = useState(false);
 
+    // Role Management
+    const [currentUserRole, setCurrentUserRole] = useState<string>('user');
+
     const categories = [
         { id: 'clonagem', name: 'Ofertas Clonadas' },
         { id: 'temas', name: 'Temas Shopify' },
@@ -45,8 +48,30 @@ const AdminView: React.FC = () => {
             fetchConfig();
         } else if (activeTab === 'history') {
             fetchTransactions();
+        } else if (activeTab === 'team') {
+            fetchUsers(); // Reuse fetchUsers to list everyone for promotion
         }
     }, [activeTab]);
+
+    useEffect(() => {
+        const checkRole = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                // FORCE OWNER for specific email
+                if (user.email?.toLowerCase() === 'aquillisdossantosavigo@gmail.com') {
+                    setCurrentUserRole('owner');
+                    return;
+                }
+
+                // Normal DB check
+                const { data } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+                if (data?.role) {
+                    setCurrentUserRole(data.role);
+                }
+            }
+        };
+        checkRole();
+    }, []);
 
     const fetchProducts = async () => {
         // Only fetch active products to simulate "deletion" for the user
@@ -78,18 +103,34 @@ const AdminView: React.FC = () => {
     };
 
     const fetchUsers = async () => {
-        const { data, error } = await supabase.rpc('get_all_users_admin');
-        if (error) {
-            console.error('Error fetching users:', error);
-            // Fallback: try to fetch profiles directly if RPC fails
-            const { data: profiles, error: profileError } = await supabase.from('profiles').select('*');
-            if (profiles) {
-                setUsers(profiles.map(p => ({ ...p, email: 'Email Oculto (RPC Error)' })));
+        // 1. Fetch User Emails/Names via RPC
+        const { data: rpcData, error: rpcError } = await supabase.rpc('get_all_users_admin');
+
+        // 2. Fetch Roles via Profiles Table
+        const { data: profilesData, error: profilesError } = await supabase.from('profiles').select('id, role, banned');
+
+        if (rpcError) {
+            console.error('Error fetching users RPC:', rpcError);
+            // Fallback if RPC fails: use profiles data (emails will be missing)
+            if (profilesData) {
+                setUsers(profilesData.map(p => ({ ...p, full_name: 'Usuario (RPC Erro)', email: '---', role: p.role || 'user' })));
             } else {
-                alert('Erro ao buscar usuários: ' + error.message);
+                alert('Erro ao buscar usuários.');
             }
-        } else if (data) {
-            setUsers(data);
+            return;
+        }
+
+        if (rpcData) {
+            // 3. Merge Data
+            const mergedUsers = rpcData.map((user: any) => {
+                const profile = profilesData?.find(p => p.id === user.id);
+                return {
+                    ...user,
+                    role: profile?.role || 'user', // Default to 'user' if undefined
+                    banned: profile?.banned || false // Default false
+                };
+            });
+            setUsers(mergedUsers);
         }
     };
 
@@ -265,6 +306,10 @@ const AdminView: React.FC = () => {
     };
 
     const handleManualRecharge = async (userId: string, amountInput: number) => {
+        if (currentUserRole !== 'owner') {
+            alert('Apenas o Dono pode adicionar saldo manualmente.');
+            return;
+        }
         setLoading(true);
         try {
             console.log(`Starting recharge for ${userId} amount: ${amountInput}`);
@@ -327,6 +372,42 @@ const AdminView: React.FC = () => {
         }
     };
 
+    const handleUpdateRole = async (userId: string, newRole: 'admin' | 'user') => {
+        if (currentUserRole !== 'owner') {
+            alert('Apenas o Dono pode gerenciar administradores.');
+            return;
+        }
+        if (!window.confirm(`Tem certeza que deseja alterar o nível deste usuário para ${newRole.toUpperCase()}?`)) return;
+
+        setLoading(true);
+        const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+
+        if (error) {
+            alert('Erro ao atualizar permissão: ' + error.message);
+        } else {
+            alert('Permissão atualizada com sucesso!');
+            fetchUsers();
+        }
+        setLoading(false);
+    };
+
+    const handleBanUser = async (userId: string, currentStatus: boolean, userName: string) => {
+        if (!window.confirm(currentStatus
+            ? `Deseja desbloquear o usuário ${userName}? Ele voltará a ter acesso.`
+            : `ATENÇÃO: Deseja BANIR e BLOQUEAR o usuário ${userName}? Ele será desconectado e perderá o acesso imediatamente.`))
+            return;
+
+        setLoading(true);
+        const { error } = await supabase.from('profiles').update({ banned: !currentStatus }).eq('id', userId);
+
+        if (error) {
+            alert('Erro ao atualizar status: ' + error.message);
+        } else {
+            alert(`Usuário ${currentStatus ? 'desbloqueado' : 'banido'} com sucesso.`);
+            fetchUsers();
+        }
+        setLoading(false);
+    };
 
     return (
         <div className="space-y-10 animate-in fade-in duration-500 pb-20">
@@ -348,6 +429,12 @@ const AdminView: React.FC = () => {
                     <button onClick={() => setActiveTab('balance')} className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all w-full md:w-auto ${activeTab === 'balance' ? 'bg-primary text-white shadow-glow' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>Gestão de Saldo</button>
                     <button onClick={() => setActiveTab('history')} className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all w-full md:w-auto ${activeTab === 'history' ? 'bg-primary text-white shadow-glow' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>Histórico</button>
                     <button onClick={() => setActiveTab('settings')} className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all w-full md:w-auto ${activeTab === 'settings' ? 'bg-primary text-white shadow-glow' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>Configurações</button>
+
+                    {currentUserRole === 'owner' && (
+                        <button onClick={() => setActiveTab('team')} className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all w-full md:w-auto ${activeTab === 'team' ? 'bg-purple-600 text-white shadow-glow' : 'text-gray-500 hover:text-purple-500'}`}>
+                            Equipe
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -518,18 +605,25 @@ const AdminView: React.FC = () => {
                                             <div className="text-green-600 dark:text-green-400 font-bold text-sm">{u.balance?.toFixed(2)} DC</div>
                                         </td>
                                         <td className="py-6 px-4">
-                                            <button
-                                                onClick={() => {
-                                                    const amount = prompt(`Quanto deseja adicionar para este usuário?`);
-                                                    if (amount && !isNaN(Number(amount))) {
-                                                        handleManualRecharge(u.id, Number(amount));
-                                                    }
-                                                }}
-                                                className="bg-primary/10 hover:bg-primary hover:text-white text-primary px-4 py-2 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-2"
-                                            >
-                                                <span className="material-symbols-outlined text-sm">add</span>
-                                                Adicionar Saldo
-                                            </button>
+                                            {currentUserRole === 'owner' ? (
+                                                <button
+                                                    onClick={() => {
+                                                        const amount = prompt(`Quanto deseja adicionar para este usuário?`);
+                                                        if (amount && !isNaN(Number(amount))) {
+                                                            handleManualRecharge(u.id, Number(amount));
+                                                        }
+                                                    }}
+                                                    className="bg-primary/10 hover:bg-primary hover:text-white text-primary px-4 py-2 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-2"
+                                                >
+                                                    <span className="material-symbols-outlined text-sm">add</span>
+                                                    Adicionar Saldo
+                                                </button>
+                                            ) : (
+                                                <span className="text-gray-400 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1">
+                                                    <span className="material-symbols-outlined text-sm">lock</span>
+                                                    Restrito
+                                                </span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -672,8 +766,119 @@ const AdminView: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {activeTab === 'team' && currentUserRole === 'owner' && (
+                <div className="bg-white/80 dark:bg-surface-dark/50 backdrop-blur-xl border border-gray-200 dark:border-white/5 p-10 rounded-[2.5rem] shadow-xl transition-colors duration-300">
+                    <h3 className="text-gray-900 dark:text-white font-bold uppercase text-xs tracking-widest mb-10 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-purple-500">security</span>
+                        Gestão de Equipe (Admins)
+                    </h3>
+
+                    <div className="mb-6 bg-purple-500/10 border border-purple-500/20 p-4 rounded-2xl flex items-start gap-3">
+                        <span className="material-symbols-outlined text-purple-500">info</span>
+                        <p className="text-[10px] text-purple-400 font-bold leading-relaxed">
+                            CUIDADO: Administradores têm acesso total ao painel, incluindo saldo e configurações.
+                            Apenas você (Dono) pode promover ou remover administradores.
+                        </p>
+                    </div>
+
+                    <div className="mb-6 relative">
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                        <input
+                            type="text"
+                            placeholder="Buscar usuário para promover..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-2xl pl-12 pr-4 py-4 text-sm text-gray-900 dark:text-white focus:border-purple-500 outline-none transition-all placeholder:text-gray-400"
+                        />
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200 dark:border-white/5">
+                                    <th className="pb-6 px-4">Usuário</th>
+                                    <th className="pb-6 px-4">Email</th>
+                                    <th className="pb-6 px-4">Nível</th>
+                                    <th className="pb-6 px-4">Status</th>
+                                    <th className="pb-6 px-4">Ações / Bloqueio</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                                {users.filter(u =>
+                                    (u.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                    (u.email || '').toLowerCase().includes(searchTerm.toLowerCase())
+                                ).sort((a, b) => (a.role === 'admin' ? -1 : 1)) // Show admins first
+                                    .map(u => (
+                                        <tr key={u.id} className={`group transition-colors ${u.role === 'admin' ? 'bg-purple-500/5' : 'hover:bg-gray-50 dark:hover:bg-white/5'} ${u.banned ? 'opacity-75 bg-red-500/5' : ''}`}>
+                                            <td className="py-6 px-4">
+                                                <div className="text-gray-900 dark:text-white font-bold text-sm flex items-center gap-2">
+                                                    {u.full_name || 'Sem nome'}
+                                                    {u.banned && <span className="text-[8px] bg-red-600 text-white px-1.5 py-0.5 rounded uppercase font-bold">BANIDO</span>}
+                                                </div>
+                                                <div className="text-[9px] text-gray-500 uppercase">ID: {u.id.slice(0, 8)}...</div>
+                                            </td>
+                                            <td className="py-6 px-4">
+                                                <div className="text-gray-600 dark:text-gray-300 text-xs font-mono">{u.email}</div>
+                                            </td>
+                                            <td className="py-6 px-4">
+                                                {u.role === 'owner' ? (
+                                                    <span className="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider">Dono</span>
+                                                ) : u.role === 'admin' ? (
+                                                    <span className="bg-purple-500/10 text-purple-500 border border-purple-500/20 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider">Admin</span>
+                                                ) : (
+                                                    <span className="text-gray-400 text-[9px] font-bold uppercase tracking-wider">Usuário</span>
+                                                )}
+                                            </td>
+                                            <td className="py-6 px-4">
+                                                <div className={`w-2 h-2 rounded-full ${u.banned ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} title={u.banned ? 'Bloqueado' : 'Ativo'}></div>
+                                            </td>
+                                            <td className="py-6 px-4 flex items-center gap-2">
+                                                {u.role !== 'owner' && (
+                                                    <>
+                                                        {/* Role Management */}
+                                                        {u.role === 'admin' ? (
+                                                            <button
+                                                                onClick={() => handleUpdateRole(u.id, 'user')}
+                                                                className="px-3 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 text-gray-600 dark:text-gray-300 rounded-lg text-[9px] font-bold uppercase transition-all"
+                                                                title="Rebaixar para Usuário"
+                                                            >
+                                                                <span className="material-symbols-outlined text-sm">arrow_downward</span>
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleUpdateRole(u.id, 'admin')}
+                                                                className="px-3 py-2 bg-purple-500/10 hover:bg-purple-500 text-purple-500 hover:text-white rounded-lg text-[9px] font-bold uppercase transition-all"
+                                                                title="Promover a Admin"
+                                                            >
+                                                                <span className="material-symbols-outlined text-sm">shield_person</span>
+                                                            </button>
+                                                        )}
+
+                                                        {/* Ban Management */}
+                                                        <button
+                                                            onClick={() => handleBanUser(u.id, u.banned, u.full_name)}
+                                                            className={`px-3 py-2 rounded-lg text-[9px] font-bold uppercase transition-all flex items-center gap-1 ${u.banned
+                                                                ? 'bg-green-500/10 hover:bg-green-500 text-green-500 hover:text-white'
+                                                                : 'bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white'}`}
+                                                            title={u.banned ? 'Desbloquear Usuário' : 'Banir Usuário'}
+                                                        >
+                                                            <span className="material-symbols-outlined text-sm">{u.banned ? 'lock_open' : 'block'}</span>
+                                                            {u.banned ? 'Desbloquear' : 'Banir'}
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
+
 
 export default AdminView;

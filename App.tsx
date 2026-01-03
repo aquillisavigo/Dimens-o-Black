@@ -146,6 +146,14 @@ const App: React.FC = () => {
     if (error) {
       console.error('Error fetching profile:', error);
     } else if (data) {
+      if (data.banned) {
+        await supabase.auth.signOut();
+        setSession(null);
+        setProfile(null);
+        alert('Sua conta foi banida administrativamente.');
+        window.location.reload(); // Force reload to clear state
+        return;
+      }
       setProfile(data);
       setTheme(data.theme as 'dark' | 'light');
     }
