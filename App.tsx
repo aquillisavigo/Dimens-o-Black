@@ -281,6 +281,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const protectedTabs: ActiveTab[] = ['profile', 'black-money', 'admin', 'downloads', 'affiliates'];
     if (!loading && !session && protectedTabs.includes(activeTab)) {
+      setActiveTab('dashboard'); // Redirect to safe zone to prevent loop/empty render
       setShowLogin(true);
       showToast('Faça login para acessar esta área.', 'error');
     }
