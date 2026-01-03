@@ -277,6 +277,15 @@ const App: React.FC = () => {
 
   // Removed global session check to allow guest access
 
+  // Monitora abas protegidas para exigir login
+  useEffect(() => {
+    const protectedTabs: ActiveTab[] = ['profile', 'black-money', 'admin', 'downloads', 'affiliates'];
+    if (!loading && !session && protectedTabs.includes(activeTab)) {
+      setShowLogin(true);
+      showToast('Faça login para acessar esta área.', 'error');
+    }
+  }, [activeTab, session, loading, showToast]);
+
   const renderContent = () => {
     // Determine content based on tab & auth
     const balance = profile?.balance || 0;
@@ -285,7 +294,7 @@ const App: React.FC = () => {
       case 'dashboard':
         return <DashboardView onTabChange={setActiveTab} />;
       case 'profile':
-        if (!session) { setShowLogin(true); return null; }
+        if (!session) return null;
         return <ProfileView profile={profile} onUpdate={() => fetchProfile(session?.user?.id)} />;
       case 'temas':
         return <TemasView balance={balance} onPurchase={handlePurchase} />;
@@ -294,7 +303,7 @@ const App: React.FC = () => {
       case 'ofertas-clonadas':
         return <OfertasClonadasView balance={balance} onPurchase={handlePurchase} />;
       case 'black-money':
-        if (!session) { setShowLogin(true); return null; }
+        if (!session) return null;
         return (
           <BlackMoneyView
             balance={balance}
@@ -316,13 +325,13 @@ const App: React.FC = () => {
       case 'kl-remotas':
         return <KLRemotasView balance={balance} onPurchase={handlePurchase} />;
       case 'admin':
-        if (!session) { setShowLogin(true); return null; }
+        if (!session) return null;
         return <AdminView />;
       case 'downloads':
-        if (!session) { setShowLogin(true); return null; }
+        if (!session) return null;
         return <MyDownloadsView userId={session?.user?.id} />;
       case 'affiliates':
-        if (!session) { setShowLogin(true); return null; }
+        if (!session) return null;
         return <AffiliateDashboardView profile={profile} onToast={showToast} />;
       default:
         return (
