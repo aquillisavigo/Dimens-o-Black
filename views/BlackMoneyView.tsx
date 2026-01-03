@@ -75,12 +75,12 @@ const BlackMoneyView: React.FC<BlackMoneyViewProps> = ({
 
     return (
         <div className="space-y-8 animate-in zoom-in-95 duration-500">
-            <div className="bg-gradient-to-br from-indigo-950/80 to-black p-12 rounded-[2.5rem] border border-indigo-500/20 relative overflow-hidden shadow-2xl">
+            <div className="bg-gradient-to-br from-indigo-950/80 to-black p-6 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border border-indigo-500/20 relative overflow-hidden shadow-2xl">
                 <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-500/10 rounded-full blur-[120px] -mr-20 -mt-20"></div>
-                <div className="relative z-10 flex flex-col lg:flex-row gap-12 items-start">
+                <div className="relative z-10 flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
                     <div className="flex-1">
                         <p className="text-xs font-bold text-indigo-400 uppercase tracking-[0.4em] mb-4">Economia Oculta</p>
-                        <h2 className="text-7xl font-display font-bold text-white mb-10 tracking-tighter">
+                        <h2 className="text-5xl md:text-7xl font-display font-bold text-white mb-8 md:mb-10 tracking-tighter">
                             {balance.toFixed(2)} <span className="text-indigo-500 text-glow">Dark Coins</span>
                         </h2>
 
@@ -96,13 +96,13 @@ const BlackMoneyView: React.FC<BlackMoneyViewProps> = ({
                         </div>
                     </div>
 
-                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] w-full max-w-md shadow-2xl">
-                        <h3 className="text-white font-bold uppercase text-xs tracking-widest mb-8 flex items-center justify-between text-glow">
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] w-full max-w-md shadow-2xl">
+                        <h3 className="text-white font-bold uppercase text-xs tracking-widest mb-8 flex flex-wrap items-center justify-between gap-4 text-glow">
                             <span className="flex items-center gap-2">
                                 <span className="material-symbols-outlined text-primary">payments</span>
                                 Solicitar Recarga
                             </span>
-                            <span className="bg-white/5 px-3 py-1 rounded-lg text-[9px] text-gray-400">
+                            <span className="bg-white/5 px-3 py-2 rounded-lg text-[9px] text-gray-400 whitespace-nowrap">
                                 Saldo: <span className="text-white">{balance.toFixed(2)} DC</span>
                             </span>
                         </h3>
