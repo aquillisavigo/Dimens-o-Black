@@ -84,8 +84,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({ onTabChange }) => {
                                 value={product ? product.product_name : "Disponível"}
                                 icon={info.icon}
                                 color={info.color as any}
-                                change={product ? `${product.sales_count} Vendas` : "Aguardando Vendas"}
-                                isPositive={!!product}
                             />
                         </div>
                     );
