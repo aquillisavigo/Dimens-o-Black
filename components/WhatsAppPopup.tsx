@@ -46,50 +46,55 @@ const WhatsAppPopup: React.FC = () => {
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
-            {/* Modal Container */}
-            <div className="relative w-full max-w-sm bg-surface-dark-2 md:bg-surface-dark border border-border-dark rounded-[2rem] animate-pulse-shadow-red overflow-hidden p-8 flex flex-col items-center text-center animate-in zoom-in-50 duration-500 ease-out">
+            {/* Modal Container - Circular Style */}
+            <div className="relative w-[340px] h-[340px] bg-surface-dark-2 md:bg-black/90 border-2 border-primary/30 rounded-full overflow-hidden p-6 flex flex-col items-center justify-center text-center animate-in zoom-in-50 duration-500 ease-out transition-all animate-pulse-shadow-red">
 
-                {/* Background Logo */}
+                {/* Background Logo - Zoomed to remove borders */}
                 <div
                     className="absolute inset-0 z-0 pointer-events-none bg-center bg-no-repeat"
                     style={{
                         backgroundImage: `url('https://www.upload.ee/image/18931113/logo_do_site_e_nossa_logo_png.png')`,
-                        backgroundSize: '160%',
-                        opacity: 0.2
+                        backgroundSize: '135%',
+                        opacity: 0.5
                     }}
                 ></div>
 
-                {/* Close Button */}
+                {/* Dark Overlay to make text readable */}
+                <div className="absolute inset-0 bg-black/60 z-0"></div>
+
+                {/* Glowing Border Animation */}
+                <div className="absolute inset-0 rounded-full border border-primary/20 animate-pulse-shadow-red pointer-events-none"></div>
+
+                {/* Close Button - Top Center (Circular Safe Area) */}
                 <button
                     onClick={handleClose}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors bg-white/5 p-2 rounded-full z-20"
+                    className="absolute top-3 left-1/2 -translate-x-1/2 text-white/60 hover:text-white hover:bg-white/10 transition-all p-2 rounded-full z-50 active:scale-90"
+                    title="Fechar"
                 >
-                    <span className="material-symbols-outlined text-sm">close</span>
+                    <span className="material-symbols-outlined text-xl font-bold drop-shadow-md">close</span>
                 </button>
 
-                {/* Content - Removed Logo, added relative z-10 for layering */}
-                <h3 className="relative z-10 text-xl md:text-2xl font-display font-bold text-white uppercase tracking-wide leading-tight mb-4 mt-4">
-                    Grupo VIP <span className="text-primary text-glow">Exclusivo</span>
-                </h3>
+                {/* Content */}
+                <div className="relative z-10 flex flex-col items-center gap-3 mt-2 w-full">
+                    <h3 className="text-2xl md:text-3xl font-display font-bold text-white uppercase tracking-wider leading-none drop-shadow-md">
+                        Grupo VIP <br /><span className="text-primary text-glow text-3xl md:text-4xl">Exclusivo</span>
+                    </h3>
 
-                <p className="relative z-10 text-gray-300 text-sm md:text-base mb-8 leading-relaxed font-medium max-w-xs mx-auto">
-                    Venha participar do nosso grupo <span className="text-primary font-bold text-glow">VIP</span> no WhatsApp! Receba <strong className="text-white">ofertas insanas</strong>, novidades e <strong className="text-white">networking de alto nível</strong>.
-                </p>
+                    <p className="text-gray-200 text-xs md:text-sm leading-relaxed max-w-[240px] font-bold my-2 drop-shadow-sm">
+                        Receba <strong className="text-white text-glow">ofertas insanas</strong> e networking de alto nível no nosso grupo secreto.
+                    </p>
 
-                <button
-                    onClick={handleJoin}
-                    className="relative z-10 w-full bg-primary hover:bg-primary-hover text-white font-bold py-4 rounded-xl uppercase tracking-widest text-xs shadow-glow transition-all active:scale-95 group overflow-hidden"
-                >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                        Participar Agora
-                        <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                    </span>
-                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                </button>
+                    <button
+                        onClick={handleJoin}
+                        className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-10 rounded-full uppercase tracking-[0.2em] text-xs shadow-glow transition-all active:scale-95 hover:scale-105 border border-white/10"
+                    >
+                        Entrar Agora
+                    </button>
 
-                <p className="relative z-10 mt-6 text-[10px] text-red-500 font-bold uppercase tracking-[0.3em] animate-pulse">
-                    🔒 Acesso Restrito e Limitado
-                </p>
+                    <p className="text-[10px] text-red-500 font-bold uppercase tracking-[0.3em] animate-pulse mt-2 bg-black/40 px-3 py-1 rounded-full border border-red-500/20">
+                        🔒 Vagas Limitadas
+                    </p>
+                </div>
             </div>
         </div>
     );
