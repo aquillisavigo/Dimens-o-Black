@@ -307,7 +307,7 @@ const App: React.FC = () => {
       case 'dashboard':
         return <DashboardView onTabChange={setActiveTab} />;
       case 'profile':
-        if (!session) { setShowLogin(true); return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
+        if (!session) { return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
         return <ProfileView profile={profile} onUpdate={() => fetchProfile(session?.user?.id)} />;
       case 'temas':
         return <TemasView balance={balance} onPurchase={handlePurchase} />;
@@ -316,7 +316,7 @@ const App: React.FC = () => {
       case 'ofertas-clonadas':
         return <OfertasClonadasView balance={balance} onPurchase={handlePurchase} />;
       case 'black-money':
-        if (!session) { setShowLogin(true); return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
+        if (!session) { return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
         return (
           <BlackMoneyView
             balance={balance}
@@ -337,13 +337,13 @@ const App: React.FC = () => {
       case 'kl-remotas':
         return <KLRemotasView balance={balance} onPurchase={handlePurchase} />;
       case 'admin':
-        if (!session) { setShowLogin(true); return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
+        if (!session) { return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
         return <AdminView />;
       case 'downloads':
-        if (!session) { setShowLogin(true); return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
+        if (!session) { return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
         return <MyDownloadsView userId={session?.user?.id} />;
       case 'affiliates':
-        if (!session) { setShowLogin(true); return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
+        if (!session) { return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
         return <AffiliateDashboardView profile={profile} onToast={showToast} />;
       default:
         return (
