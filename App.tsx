@@ -58,12 +58,19 @@ const App: React.FC = () => {
 
   // Monitora Auth Session
   useEffect(() => {
+    // Fail-safe: Force loading to false after 5s if Supabase hangs
+    const timeout = setTimeout(() => setLoading(false), 5000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
         fetchProfile(session.user.id);
-        setShowLogin(false); // Hide login if session restored
+        setShowLogin(false);
       }
+      setLoading(false);
+      clearTimeout(timeout);
+    }).catch((err) => {
+      console.error('Session init error:', err);
       setLoading(false);
     });
 
@@ -73,7 +80,7 @@ const App: React.FC = () => {
       setSession(session);
       if (session) {
         fetchProfile(session.user.id);
-        setShowLogin(false); // Hide login on new session
+        setShowLogin(false);
 
         // Realtime Profile Updates (Balance, Notifications, etc)
         const channel = supabase
@@ -99,11 +106,13 @@ const App: React.FC = () => {
       }
       else {
         setProfile(null);
-        // Do not force showLogin here, let user browse as guest
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   const fetchProfile = async (userId: string) => {
@@ -277,15 +286,18 @@ const App: React.FC = () => {
 
   // Removed global session check to allow guest access
 
-  // Monitora abas protegidas para exigir login
-  useEffect(() => {
-    const protectedTabs: ActiveTab[] = ['profile', 'black-money', 'admin', 'downloads', 'affiliates'];
-    if (!loading && !session && protectedTabs.includes(activeTab)) {
-      setActiveTab('dashboard'); // Redirect to safe zone to prevent loop/empty render
-      setShowLogin(true);
-      showToast('Faça login para acessar esta área.', 'error');
-    }
-  }, [activeTab, session, loading, showToast]);
+  const RestrictedAccess: React.FC<{ onLogin: () => void }> = ({ onLogin }) => (
+    <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-500">
+      <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6 animate-pulse">
+        <span className="material-symbols-outlined text-4xl text-primary">lock</span>
+      </div>
+      <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-2">Acesso Restrito</h2>
+      <p className="text-gray-500 max-w-sm text-center mb-8">Esta área é exclusiva para membros da Dimensão Black. Valide sua identidade para continuar.</p>
+      <button onClick={onLogin} className="bg-primary hover:bg-primary-hover px-8 py-3 rounded-xl font-bold text-white uppercase text-xs tracking-widest shadow-glow active:scale-95 transition-all">
+        Fazer Login
+      </button>
+    </div>
+  );
 
   const renderContent = () => {
     // Determine content based on tab & auth
@@ -295,7 +307,7 @@ const App: React.FC = () => {
       case 'dashboard':
         return <DashboardView onTabChange={setActiveTab} />;
       case 'profile':
-        if (!session) return null;
+        if (!session) { setShowLogin(true); return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
         return <ProfileView profile={profile} onUpdate={() => fetchProfile(session?.user?.id)} />;
       case 'temas':
         return <TemasView balance={balance} onPurchase={handlePurchase} />;
@@ -304,7 +316,7 @@ const App: React.FC = () => {
       case 'ofertas-clonadas':
         return <OfertasClonadasView balance={balance} onPurchase={handlePurchase} />;
       case 'black-money':
-        if (!session) return null;
+        if (!session) { setShowLogin(true); return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
         return (
           <BlackMoneyView
             balance={balance}
@@ -315,7 +327,6 @@ const App: React.FC = () => {
           />
         );
       case 'planos':
-        // Planos can be viewed by anyone, but purchase needs login
         return (
           <PlansView
             userEmail={session?.user?.email}
@@ -326,13 +337,13 @@ const App: React.FC = () => {
       case 'kl-remotas':
         return <KLRemotasView balance={balance} onPurchase={handlePurchase} />;
       case 'admin':
-        if (!session) return null;
+        if (!session) { setShowLogin(true); return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
         return <AdminView />;
       case 'downloads':
-        if (!session) return null;
+        if (!session) { setShowLogin(true); return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
         return <MyDownloadsView userId={session?.user?.id} />;
       case 'affiliates':
-        if (!session) return null;
+        if (!session) { setShowLogin(true); return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
         return <AffiliateDashboardView profile={profile} onToast={showToast} />;
       default:
         return (
