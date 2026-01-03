@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
+import { analytics } from '../services/analyticsService';
 
 const WhatsAppPopup: React.FC = () => {
     const [isVisible, setIsVisible] = useState(false);
@@ -38,6 +39,7 @@ const WhatsAppPopup: React.FC = () => {
     };
 
     const handleJoin = () => {
+        analytics.trackEvent('join_whatsapp', { origin: 'site' });
         window.open(link, '_blank');
         handleClose();
     };

@@ -21,6 +21,7 @@ import SolicitarClonagemView from './views/SolicitarClonagemView';
 import AffiliateDashboardView from './views/AffiliateDashboardView';
 import SocialProofPopup from './components/SocialProofPopup';
 import WhatsAppPopup from './components/WhatsAppPopup';
+import { analytics } from './services/analyticsService';
 
 // Sistema de Notificação (Toast)
 const Toast: React.FC<{ message: string; type: 'success' | 'error' }> = ({ message, type }) => (
@@ -98,6 +99,20 @@ const App: React.FC = () => {
             if (payload.old && payload.new.balance > payload.old.balance) {
               const diff = payload.new.balance - payload.old.balance;
               showToast(`Recebido: ${diff.toFixed(2)} Dark Coins!`, 'success');
+
+              // Track Recharge as Purchase
+              analytics.trackEvent('purchase', {
+                transaction_id: `recharge_${Date.now()}`,
+                value: diff,
+                currency: 'BRL',
+                user_id: session.user.id,
+                items: [{
+                  item_name: 'Recarga Dark Coins',
+                  item_id: 'recharge',
+                  price: diff,
+                  quantity: 1
+                }]
+              });
             }
           })
           .subscribe();
@@ -113,6 +128,12 @@ const App: React.FC = () => {
       subscription.unsubscribe();
       clearTimeout(timeout);
     };
+
+  }, []);
+
+  // Initialize Analytics
+  useEffect(() => {
+    analytics.initialize();
   }, []);
 
   const fetchProfile = async (userId: string) => {
@@ -249,6 +270,21 @@ const App: React.FC = () => {
       }]).then();
 
       if (productId) setActiveTab('downloads');
+
+      // Track Purchase in GTM
+      analytics.trackEvent('purchase', {
+        transaction_id: `purchase_${Date.now()}_${productId || 'service'}`,
+        value: price,
+        currency: 'BRL',
+        user_id: session.user.id,
+        items: [{
+          item_name: name,
+          item_id: productId || 'service',
+          price: price,
+          quantity: 1
+        }]
+      });
+
       return true;
     } else {
       showToast('Saldo insuficiente em Dark Coins.', 'error');

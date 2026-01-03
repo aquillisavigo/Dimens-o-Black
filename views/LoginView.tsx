@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Logo from '../components/Logo';
 import { supabase } from '../supabaseClient';
+import { analytics } from '../services/analyticsService';
 
 interface LoginViewProps {
   onLogin: () => void; // This will now be handled via Auth state change in App.tsx
@@ -35,7 +36,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onToast }) => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: authData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -50,6 +51,11 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onToast }) => {
     if (error) {
       onToast(error.message, 'error');
     } else {
+      analytics.trackEvent('affiliate_signup', {
+        user_id: authData.user?.id,
+        referral_code: localStorage.getItem('referral_code') || undefined
+      });
+
       onToast('Conta criada com sucesso! Verifique seu e-mail para confirmar o acesso.', 'success');
       alert('IMPORTANTE: Verifique seu e-mail (inclusive caixa de spam) para confirmar o cadastro antes de fazer login.');
       setAuthMode('login');

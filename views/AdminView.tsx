@@ -24,6 +24,8 @@ const AdminView: React.FC = () => {
 
     // State for Config
     const [whatsappLinkEdit, setWhatsappLinkEdit] = useState('');
+    const [gtmId, setGtmId] = useState('');
+    const [gtmActive, setGtmActive] = useState(false);
 
     const categories = [
         { id: 'clonagem', name: 'Ofertas Clonadas' },
@@ -92,12 +94,29 @@ const AdminView: React.FC = () => {
     };
 
     const fetchConfig = async () => {
-        const { data } = await supabase
+        const { data: whatsappData } = await supabase
             .from('app_config')
             .select('value')
             .eq('key', 'whatsapp_group_link')
-            .single();
-        if (data) setWhatsappLinkEdit(data.value);
+            .maybeSingle();
+
+        if (whatsappData) setWhatsappLinkEdit(whatsappData.value);
+
+        const { data: gtmIdData } = await supabase
+            .from('app_config')
+            .select('value')
+            .eq('key', 'gtm_id')
+            .maybeSingle();
+
+        if (gtmIdData) setGtmId(gtmIdData.value);
+
+        const { data: gtmActiveData } = await supabase
+            .from('app_config')
+            .select('value')
+            .eq('key', 'gtm_active')
+            .maybeSingle();
+
+        if (gtmActiveData) setGtmActive(gtmActiveData.value === 'true');
     };
 
     const fetchTransactions = async () => {
@@ -128,12 +147,19 @@ const AdminView: React.FC = () => {
     const handleSaveConfig = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+
+        const updates = [
+            { key: 'whatsapp_group_link', value: whatsappLinkEdit },
+            { key: 'gtm_id', value: gtmId },
+            { key: 'gtm_active', value: String(gtmActive) }
+        ];
+
         const { error } = await supabase
             .from('app_config')
-            .upsert({ key: 'whatsapp_group_link', value: whatsappLinkEdit });
+            .upsert(updates);
 
         if (error) alert('Erro ao salvar configuração: ' + error.message);
-        else alert('Link do Grupo atualizado com sucesso!');
+        else alert('Configurações atualizadas com sucesso!');
 
         setLoading(false);
     };
@@ -533,7 +559,6 @@ const AdminView: React.FC = () => {
                                 <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-green-500">group</span>
                                 <input
                                     type="text"
-                                    required
                                     value={whatsappLinkEdit}
                                     onChange={(e) => setWhatsappLinkEdit(e.target.value)}
                                     className="w-full bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-2xl pl-12 pr-4 py-4 text-sm text-gray-900 dark:text-white focus:border-green-500 outline-none transition-colors placeholder:text-gray-400"
@@ -542,8 +567,51 @@ const AdminView: React.FC = () => {
                             </div>
                             <p className="text-[10px] text-gray-500 ml-2">Este link será atualizado instantaneamente no botão da Dashboard.</p>
                         </div>
+
+                        {/* Seção Rastreamento & Ads */}
+                        <div className="pt-8 border-t border-gray-100 dark:border-white/5">
+                            <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-sm">ads_click</span>
+                                Rastreamento & Ads
+                            </h4>
+
+                            <div className="bg-gray-50 dark:bg-black/20 p-6 rounded-2xl border border-gray-100 dark:border-white/5 space-y-6">
+                                {/* Google Tag Manager ID */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-2">Google Tag Manager ID</label>
+                                    <div className="relative">
+                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-blue-500">code</span>
+                                        <input
+                                            type="text"
+                                            value={gtmId}
+                                            onChange={(e) => setGtmId(e.target.value)}
+                                            className="w-full bg-white dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-2xl pl-12 pr-4 py-4 text-sm text-gray-900 dark:text-white focus:border-blue-500 outline-none transition-colors placeholder:text-gray-400 font-mono"
+                                            placeholder="Ex: GTM-ABC1234"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Toggle Ativar GTM */}
+                                <div className="flex items-center justify-between bg-white dark:bg-black/40 p-4 rounded-xl border border-gray-200 dark:border-white/5">
+                                    <div className="space-y-1">
+                                        <div className="text-xs font-bold text-gray-900 dark:text-white">Ativar Rastreamento (GTM)</div>
+                                        <div className="text-[9px] text-gray-500 uppercase">Habilita a injeção do script no site</div>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={gtmActive}
+                                            onChange={(e) => setGtmActive(e.target.checked)}
+                                        />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
                         <button type="submit" disabled={loading} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl uppercase tracking-widest text-[10px] shadow-glow transition-all">
-                            {loading ? 'Salvando...' : 'Atualizar Link'}
+                            {loading ? 'Salvando...' : 'Atualizar Configurações'}
                         </button>
                     </form>
                 </div>
