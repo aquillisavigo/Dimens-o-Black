@@ -254,6 +254,23 @@ const App: React.FC = () => {
           showToast('Pagamento ok, mas erro ao liberar arquivo. Contate o suporte.', 'error');
           return false;
         }
+
+        // Increment Sales Count (Fail-safe)
+        try {
+          const { data: productData } = await supabase
+            .from('products')
+            .select('sales')
+            .eq('id', productId)
+            .single();
+
+          const currentSales = productData?.sales || 0;
+          await supabase
+            .from('products')
+            .update({ sales: currentSales + 1 })
+            .eq('id', productId);
+        } catch (err) {
+          console.warn('Failed to increment sales count:', err);
+        }
       }
 
       setProfile({ ...profile, balance: newBalance });

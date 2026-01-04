@@ -17,6 +17,7 @@ const AdminView: React.FC = () => {
     const [category, setCategory] = useState('clonagem');
     const [imageUrl, setImageUrl] = useState('');
     const [downloadUrl, setDownloadUrl] = useState('');
+    const [sales, setSales] = useState(0);
 
     // State for Balance Management
     const [users, setUsers] = useState<any[]>([]);
@@ -216,6 +217,7 @@ const AdminView: React.FC = () => {
             category,
             image_url: imageUrl,
             download_url: downloadUrl,
+            sales: sales,
             is_active: true // Ensure new products are active by default
         };
 
@@ -246,6 +248,7 @@ const AdminView: React.FC = () => {
         setCategory('clonagem');
         setImageUrl('');
         setDownloadUrl('');
+        setSales(0);
     };
 
     const handleUpdateRequestStatus = async (id: string, status: string) => {
@@ -477,6 +480,11 @@ const AdminView: React.FC = () => {
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-2">Link Download (.RAR)</label>
                                 <input type="text" required value={downloadUrl} onChange={(e) => setDownloadUrl(e.target.value)} className="w-full bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:border-primary outline-none transition-all" />
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-2">Vendas (Manual)</label>
+                                <input type="number" value={sales} onChange={(e) => setSales(Number(e.target.value))} className="w-full bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:border-primary outline-none transition-all" />
+                                <p className="text-[9px] text-gray-500 ml-2">Aumente este número para o produto aparecer primeiro.</p>
+                            </div>
                             <div className="flex gap-4 pt-4">
                                 <button type="submit" disabled={loading} className="flex-1 bg-primary hover:bg-primary-hover text-white font-bold py-4 rounded-xl uppercase tracking-widest text-[10px] shadow-glow transition-all">{loading ? 'Salvando...' : 'Salvar Produto'}</button>
                                 {editingProduct && <button type="button" onClick={resetProductForm} className="px-6 bg-gray-200 dark:bg-white/5 rounded-xl text-gray-600 dark:text-white text-[10px] font-bold uppercase transition-colors">Cancelar</button>}
@@ -495,10 +503,10 @@ const AdminView: React.FC = () => {
                                     <div className="flex-1">
                                         <div className="text-[7px] font-bold text-primary uppercase mb-1">{p.category}</div>
                                         <h4 className="text-gray-900 dark:text-white font-bold text-sm truncate max-w-[150px]">{p.name}</h4>
-                                        <p className="text-green-600 dark:text-green-500 font-bold text-[10px]">{p.price} DC</p>
+                                        <p className="text-green-600 dark:text-green-500 font-bold text-[10px]">{p.price} DC • {p.sales || 0} vendas</p>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button onClick={() => { setEditingProduct(p); setName(p.name); setDescription(p.description); setPrice(p.price); setCategory(p.category); setImageUrl(p.image_url); setDownloadUrl(p.download_url); }} className="p-2 bg-gray-100 dark:bg-white/5 rounded-lg hover:bg-gray-200 dark:hover:bg-white/20"><span className="material-symbols-outlined text-sm text-gray-500 dark:text-gray-400">edit</span></button>
+                                        <button onClick={() => { setEditingProduct(p); setName(p.name); setDescription(p.description); setPrice(p.price); setCategory(p.category); setImageUrl(p.image_url); setDownloadUrl(p.download_url); setSales(p.sales || 0); }} className="p-2 bg-gray-100 dark:bg-white/5 rounded-lg hover:bg-gray-200 dark:hover:bg-white/20"><span className="material-symbols-outlined text-sm text-gray-500 dark:text-gray-400">edit</span></button>
                                         <button onClick={() => handleDeleteProduct(p.id)} className="p-2 bg-red-500/10 rounded-lg hover:bg-red-500/20 text-red-500"><span className="material-symbols-outlined text-sm">delete</span></button>
                                     </div>
                                 </div>

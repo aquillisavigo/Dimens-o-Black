@@ -16,13 +16,25 @@ const KLRemotasView: React.FC<KLRemotasViewProps> = ({ balance, onPurchase }) =>
     }, []);
 
     const fetchKLProducts = async () => {
-        const { data } = await supabase
+        let { data, error } = await supabase
             .from('products')
             .select('*')
             .eq('category', 'kl-remotas')
-            .eq('is_active', true);
+            .eq('is_active', true)
+            .order('sales', { ascending: false });
 
-        if (data) setDbProducts(data);
+        if (error) {
+            console.warn('Sorting by sales failed, fetching unsorted', error);
+            const { data: fallbackData } = await supabase
+                .from('products')
+                .select('*')
+                .eq('category', 'kl-remotas')
+                .eq('is_active', true);
+
+            if (fallbackData) setDbProducts(fallbackData);
+        } else if (data) {
+            setDbProducts(data);
+        }
         setLoading(false);
     };
 

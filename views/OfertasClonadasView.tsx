@@ -16,13 +16,25 @@ const OfertasClonadasView: React.FC<OfertasClonadasViewProps> = ({ balance, onPu
     }, []);
 
     const fetchProducts = async () => {
-        const { data } = await supabase
+        let { data, error } = await supabase
             .from('products')
             .select('*')
             .eq('category', 'clonagem')
-            .eq('is_active', true);
+            .eq('is_active', true)
+            .order('sales', { ascending: false });
 
-        if (data) setProducts(data);
+        if (error) {
+            console.warn('Sort by sales failed, falling back to default sort', error);
+            const { data: fallbackData } = await supabase
+                .from('products')
+                .select('*')
+                .eq('category', 'clonagem')
+                .eq('is_active', true);
+
+            if (fallbackData) setProducts(fallbackData);
+        } else if (data) {
+            setProducts(data);
+        }
         setLoading(false);
     };
 
