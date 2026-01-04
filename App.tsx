@@ -21,6 +21,7 @@ import SolicitarClonagemView from './views/SolicitarClonagemView';
 import AffiliateDashboardView from './views/AffiliateDashboardView';
 import SocialProofPopup from './components/SocialProofPopup';
 import WhatsAppPopup from './components/WhatsAppPopup';
+import BottomNav from './components/BottomNav';
 import { analytics } from './services/analyticsService';
 
 // Sistema de Notificação (Toast)
@@ -460,7 +461,7 @@ const App: React.FC = () => {
           userId={session?.user?.id.substring(0, 8).toUpperCase() || ''}
         />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-4 scroll-smooth bg-background-light dark:bg-background-dark relative transition-colors duration-300">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-4 scroll-smooth bg-background-light dark:bg-background-dark relative transition-colors duration-300">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] pointer-events-none opacity-0 dark:opacity-100 transition-opacity duration-500"></div>
 
           <div className="max-w-6xl mx-auto relative z-10">
@@ -472,6 +473,16 @@ const App: React.FC = () => {
           </div>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          setIsSidebarOpen(false);
+        }}
+        onMenuClick={() => setIsSidebarOpen(true)}
+      />
     </div>
   );
 };
