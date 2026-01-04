@@ -10,6 +10,7 @@ interface KLRemotasViewProps {
 const KLRemotasView: React.FC<KLRemotasViewProps> = ({ balance, onPurchase }) => {
     const [dbProducts, setDbProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchKLProducts();
@@ -61,39 +62,57 @@ const KLRemotasView: React.FC<KLRemotasViewProps> = ({ balance, onPurchase }) =>
                     <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-xs">Nenhuma KL Remota disponível no momento.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                     {dbProducts.map((kl) => (
-                        <div key={kl.id} className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/5 rounded-[2.5rem] overflow-hidden flex flex-col group hover:border-primary/40 transition-all duration-500 shadow-xl dark:shadow-none">
-                            <div className="h-44 relative bg-gray-100 dark:bg-black overflow-hidden">
+                        <div key={kl.id} className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/5 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden flex flex-col group hover:border-primary/40 transition-all duration-500 shadow-xl dark:shadow-none">
+                            <div className="h-32 md:h-44 relative bg-gray-100 dark:bg-black overflow-hidden">
                                 <img src={kl.image_url || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc48?q=80&w=400&auto=format&fit=crop'} alt={kl.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 dark:opacity-40 group-hover:opacity-100 dark:group-hover:opacity-60" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-white/20 dark:from-surface-dark via-transparent to-transparent opacity-90"></div>
-                                <div className="absolute bottom-4 left-6 flex items-center gap-2">
-                                    <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></div>
-                                    <span className="text-[10px] font-bold text-gray-900 dark:text-white uppercase tracking-widest">Ativo</span>
+                                <div className="absolute bottom-2 left-3 md:bottom-4 md:left-6 flex items-center gap-1 md:gap-2">
+                                    <div className="w-1.5 h-1.5 md:w-2.5 md:h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></div>
+                                    <span className="text-[7px] md:text-[10px] font-bold text-gray-900 dark:text-white uppercase tracking-widest">Ativo</span>
                                 </div>
                             </div>
 
-                            <div className="p-8 space-y-6 -mt-8 relative z-10">
-                                <div className="bg-gray-50 dark:bg-surface-dark-2 border border-gray-100 dark:border-white/5 p-6 rounded-2xl shadow-xl transition-colors duration-300">
-                                    <h3 className="text-lg font-display font-bold text-gray-900 dark:text-white uppercase tracking-tight mb-2">{kl.name}</h3>
-                                    <p className="text-[11px] text-gray-600 dark:text-gray-500 leading-relaxed line-clamp-2">{kl.description}</p>
-                                </div>
+                            <div className="p-4 md:p-8 space-y-3 md:space-y-6 -mt-4 md:-mt-8 relative z-10 flex flex-col flex-1">
+                                <div className="bg-gray-50 dark:bg-surface-dark-2 border border-gray-100 dark:border-white/5 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-xl transition-colors duration-300">
+                                    <h3 className="text-xs md:text-lg font-display font-bold text-gray-900 dark:text-white uppercase tracking-tight mb-1 md:mb-2 line-clamp-1 md:line-clamp-none">{kl.name}</h3>
 
-                                <div className="border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/10 p-5 rounded-2xl flex items-center justify-between shadow-inner transition-colors duration-300">
-                                    <span className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest">Investimento</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-3xl font-display font-bold text-gray-900 dark:text-white tracking-tighter">{kl.price}</span>
-                                        <span className="text-indigo-500 dark:text-indigo-400 font-display text-xs font-bold uppercase">DC</span>
+                                    <div className="relative">
+                                        <p className={`${expandedId === kl.id ? 'block' : 'hidden'} text-[11px] text-gray-600 dark:text-gray-500 leading-relaxed transition-all duration-300`}>
+                                            {kl.description}
+                                        </p>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setExpandedId(expandedId === kl.id ? null : kl.id);
+                                            }}
+                                            className="text-[9px] text-primary font-bold uppercase tracking-wider mt-1 flex items-center gap-1 hover:brightness-110 active:scale-95 transition-transform"
+                                        >
+                                            {expandedId === kl.id ? 'Ver menos' : 'Ver detalhes'}
+                                            <span className="material-symbols-outlined text-[10px]">{expandedId === kl.id ? 'expand_less' : 'expand_more'}</span>
+                                        </button>
                                     </div>
                                 </div>
 
-                                <button
-                                    onClick={() => onPurchase(kl.price, kl.name, kl.id)}
-                                    className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-5 rounded-2xl text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-glow active:scale-95 transition-all"
-                                >
-                                    <span className="material-symbols-outlined text-sm">shopping_cart</span>
-                                    COMPRAR AGORA
-                                </button>
+                                <div className="mt-auto space-y-3 md:space-y-6">
+                                    <div className="border-0 md:border border-indigo-200 dark:border-indigo-500/20 bg-transparent md:bg-indigo-50 md:dark:bg-indigo-500/10 p-0 md:p-5 rounded-none md:rounded-2xl flex items-baseline md:items-center justify-between shadow-none md:shadow-inner transition-colors duration-300">
+                                        <span className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest hidden md:block">Investimento</span>
+                                        <div className="flex items-baseline gap-1 md:gap-2">
+                                            <span className="text-sm md:text-3xl font-display font-bold text-gray-900 dark:text-white tracking-tighter">{kl.price}</span>
+                                            <span className="text-indigo-500 dark:text-indigo-400 font-display text-[8px] md:text-xs font-bold uppercase">DC</span>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => onPurchase(kl.price, kl.name, kl.id)}
+                                        className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 md:py-5 rounded-xl md:rounded-2xl text-[9px] md:text-[11px] uppercase tracking-[0.1em] md:tracking-[0.2em] flex items-center justify-center gap-1 md:gap-2 shadow-glow active:scale-95 transition-all"
+                                    >
+                                        <span className="material-symbols-outlined text-xs md:text-sm">shopping_cart</span>
+                                        <span className="md:inline">COMPRAR AGORA</span>
+                                        <span className="md:hidden">COMPRAR</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}

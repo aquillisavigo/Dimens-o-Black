@@ -10,6 +10,7 @@ interface OfertasClonadasViewProps {
 const OfertasClonadasView: React.FC<OfertasClonadasViewProps> = ({ balance, onPurchase }) => {
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchProducts();
@@ -66,36 +67,52 @@ const OfertasClonadasView: React.FC<OfertasClonadasViewProps> = ({ balance, onPu
                     <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-xs">Nenhuma oferta disponível no momento.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
                     {products.map(p => (
-                        <div key={p.id} className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/5 rounded-[2.5rem] overflow-hidden flex flex-col group hover:border-primary/40 transition-all duration-500 shadow-xl dark:shadow-none">
-                            <div className="h-48 relative bg-gray-100 dark:bg-black overflow-hidden">
+                        <div key={p.id} className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/5 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden flex flex-col group hover:border-primary/40 transition-all duration-500 shadow-xl dark:shadow-none">
+                            <div className="h-32 md:h-48 relative bg-gray-100 dark:bg-black overflow-hidden">
                                 <img src={p.image_url || 'https://via.placeholder.com/400x200'} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 dark:opacity-50 group-hover:opacity-100 dark:group-hover:opacity-80" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-white/20 dark:from-surface-dark via-transparent to-transparent"></div>
-                                <div className="absolute top-4 right-4 bg-primary text-white text-[9px] font-bold px-3 py-1.5 rounded-full shadow-glow">HOT OFFER</div>
+                                <div className="absolute top-2 right-2 md:top-4 md:right-4 bg-primary text-white text-[7px] md:text-[9px] font-bold px-2 py-1 md:px-3 md:py-1.5 rounded-full shadow-glow">HOT</div>
                             </div>
 
-                            <div className="p-8 flex flex-col flex-1">
-                                <div className="mb-6">
-                                    <h3 className="text-xl font-display font-bold text-gray-900 dark:text-white uppercase tracking-tight mb-2 group-hover:text-primary transition-colors">{p.name}</h3>
-                                    <p className="text-[11px] text-gray-600 dark:text-gray-500 leading-relaxed line-clamp-2">{p.description}</p>
+                            <div className="p-4 md:p-8 flex flex-col flex-1">
+                                <div className="mb-3 md:mb-6">
+                                    <h3 className="text-xs md:text-xl font-display font-bold text-gray-900 dark:text-white uppercase tracking-tight mb-1 md:mb-2 group-hover:text-primary transition-colors line-clamp-1 md:line-clamp-none">{p.name}</h3>
+
+                                    <div className="relative">
+                                        <p className={`${expandedId === p.id ? 'block' : 'hidden'} text-[11px] text-gray-600 dark:text-gray-500 leading-relaxed transition-all duration-300`}>
+                                            {p.description}
+                                        </p>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setExpandedId(expandedId === p.id ? null : p.id);
+                                            }}
+                                            className="text-[9px] text-primary font-bold uppercase tracking-wider mt-1 flex items-center gap-1 hover:brightness-110 active:scale-95 transition-transform"
+                                        >
+                                            {expandedId === p.id ? 'Ver menos' : 'Ver detalhes'}
+                                            <span className="material-symbols-outlined text-[10px]">{expandedId === p.id ? 'expand_less' : 'expand_more'}</span>
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div className="mt-auto space-y-6">
-                                    <div className="bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 p-5 rounded-2xl flex items-center justify-between shadow-inner transition-colors duration-300">
-                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Preço Individual</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-2xl font-display font-bold text-gray-900 dark:text-white">{p.price}</span>
-                                            <span className="text-primary font-bold text-xs uppercase">DC</span>
+                                <div className="mt-auto space-y-3 md:space-y-6">
+                                    {/* Price Container - Subtle on Mobile */}
+                                    <div className="bg-transparent md:bg-gray-50 md:dark:bg-white/5 border-0 md:border md:border-gray-100 md:dark:border-white/5 p-0 md:p-5 rounded-none md:rounded-2xl flex flex-row items-baseline md:items-center justify-between shadow-none md:shadow-inner transition-colors duration-300 gap-1 md:gap-0">
+                                        <span className="text-[8px] md:text-[10px] text-gray-400 font-bold uppercase tracking-widest hidden md:block">Preço</span>
+                                        <div className="flex items-baseline gap-1 md:gap-2">
+                                            <span className="text-sm md:text-2xl font-display font-bold text-gray-900 dark:text-white">{p.price}</span>
+                                            <span className="text-primary font-bold text-[8px] md:text-xs uppercase">DC</span>
                                         </div>
                                     </div>
 
                                     <button
                                         onClick={() => onPurchase(p.price, p.name, p.id)}
-                                        className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-5 rounded-2xl text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-glow active:scale-95 transition-all"
+                                        className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 md:py-5 rounded-xl md:rounded-2xl text-[9px] md:text-[11px] uppercase tracking-[0.1em] md:tracking-[0.2em] flex items-center justify-center gap-1 md:gap-2 shadow-glow active:scale-95 transition-all"
                                     >
-                                        <span className="material-symbols-outlined text-sm">shopping_cart</span>
-                                        Comprar Agora
+                                        <span className="material-symbols-outlined text-xs md:text-sm">shopping_cart</span>
+                                        <span className="md:inline">Comprar</span>
                                     </button>
                                 </div>
                             </div>
