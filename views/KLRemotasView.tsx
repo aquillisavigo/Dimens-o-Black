@@ -76,7 +76,7 @@ const KLRemotasView: React.FC<KLRemotasViewProps> = ({ balance, onPurchase }) =>
 
                             <div className="p-4 md:p-8 space-y-3 md:space-y-6 -mt-4 md:-mt-8 relative z-10 flex flex-col flex-1">
                                 <div className="bg-gray-50 dark:bg-surface-dark-2 border border-gray-100 dark:border-white/5 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-xl transition-colors duration-300">
-                                    <h3 className="text-xs md:text-lg font-display font-bold text-gray-900 dark:text-white uppercase tracking-tight mb-1 md:mb-2 line-clamp-1 md:line-clamp-none">{kl.name}</h3>
+                                    <h3 className={`text-xs md:text-lg font-display font-bold text-gray-900 dark:text-white uppercase tracking-tight mb-1 md:mb-2 ${expandedId === kl.id ? '' : 'line-clamp-1 md:line-clamp-none'} transition-all duration-300`}>{kl.name}</h3>
 
                                     <div className="relative">
                                         <p className={`${expandedId === kl.id ? 'block' : 'hidden'} text-[11px] text-gray-600 dark:text-gray-500 leading-relaxed transition-all duration-300`}>

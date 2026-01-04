@@ -78,7 +78,7 @@ const OfertasClonadasView: React.FC<OfertasClonadasViewProps> = ({ balance, onPu
 
                             <div className="p-4 md:p-8 flex flex-col flex-1">
                                 <div className="mb-3 md:mb-6">
-                                    <h3 className="text-xs md:text-xl font-display font-bold text-gray-900 dark:text-white uppercase tracking-tight mb-1 md:mb-2 group-hover:text-primary transition-colors line-clamp-1 md:line-clamp-none">{p.name}</h3>
+                                    <h3 className={`text-xs md:text-xl font-display font-bold text-gray-900 dark:text-white uppercase tracking-tight mb-1 md:mb-2 group-hover:text-primary transition-colors ${expandedId === p.id ? '' : 'line-clamp-1 md:line-clamp-none'} transition-all duration-300`}>{p.name}</h3>
 
                                     <div className="relative">
                                         <p className={`${expandedId === p.id ? 'block' : 'hidden'} text-[11px] text-gray-600 dark:text-gray-500 leading-relaxed transition-all duration-300`}>
