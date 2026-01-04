@@ -34,11 +34,28 @@ const MyDownloadsView: React.FC<MyDownloadsViewProps> = ({ userId }) => {
         <div className="space-y-10 animate-in slide-in-from-bottom-8 duration-700 pb-20">
             <div className="bg-gradient-to-br from-indigo-100 to-white dark:from-indigo-950/40 dark:to-black p-12 rounded-[2.5rem] border border-indigo-200 dark:border-indigo-500/20 shadow-2xl relative overflow-hidden transition-colors duration-300">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-[100px] -mr-20 -mt-20"></div>
-                <div className="relative z-10">
-                    <h2 className="text-5xl font-display font-bold text-gray-900 dark:text-white uppercase tracking-tighter">
-                        Minhas <span className="text-indigo-500 dark:text-indigo-400 text-glow">Aquisições</span>
-                    </h2>
-                    <p className="text-gray-500 uppercase text-[10px] font-bold tracking-[0.4em] mt-3">Repositório Privado de Ativos</p>
+                <div className="relative z-10 flex justify-between items-end">
+                    <div>
+                        <h2 className="text-5xl font-display font-bold text-gray-900 dark:text-white uppercase tracking-tighter">
+                            Minhas <span className="text-indigo-500 dark:text-indigo-400 text-glow">Aquisições</span>
+                        </h2>
+                        <p className="text-gray-500 uppercase text-[10px] font-bold tracking-[0.4em] mt-3">Repositório Privado de Ativos</p>
+                    </div>
+                    {purchases.length > 0 && (
+                        <button
+                            onClick={async () => {
+                                if (confirm('Tem certeza? Isso apagará seu histórico de downloads pessoal.')) {
+                                    setLoading(true);
+                                    await supabase.from('purchases').delete().eq('user_id', userId);
+                                    setPurchases([]);
+                                    setLoading(false);
+                                }
+                            }}
+                            className="bg-red-500/10 hover:bg-red-500/20 text-red-500 text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-lg border border-red-500/20 transition-all"
+                        >
+                            Limpar Histórico
+                        </button>
+                    )}
                 </div>
             </div>
 
