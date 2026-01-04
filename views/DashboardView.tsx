@@ -15,8 +15,22 @@ const DashboardView: React.FC<DashboardViewProps> = ({ onTabChange }) => {
 
     React.useEffect(() => {
         const fetchStats = async () => {
-            const { data } = await (supabase.rpc as any)('get_top_selling_products', { limit_count: 4 });
-            if (data) setTopProducts(data);
+            // Buscando diretamente da tabela products para garantir que todos os campos (principalmente category) venham corretos
+            const { data } = await supabase
+                .from('products')
+                .select('id, name, category, sales, is_active')
+                .eq('is_active', true)
+                .order('sales', { ascending: false })
+                .limit(4);
+
+            if (data) {
+                // Mapeando para o formato esperado pelo componente, se necessário
+                const formatted = data.map(p => ({
+                    ...p,
+                    product_name: p.name // Mantendo compatibilidade se algo usar product_name
+                }));
+                setTopProducts(formatted);
+            }
         };
 
         const fetchConfig = async () => {
@@ -42,8 +56,22 @@ const DashboardView: React.FC<DashboardViewProps> = ({ onTabChange }) => {
         return ranks[index] || { title: `${index + 1}º Lugar`, color: "purple", icon: "star" };
     };
 
+    const getDestinationTab = (dbCategory: string): ActiveTab => {
+        // Mapeia as categorias do Banco de Dados para as Abas do Sistema
+        switch (dbCategory) {
+            case 'kl-remotas': return 'kl-remotas';
+            case 'temas': return 'temas';
+            case 'clonagem': return 'ofertas-clonadas';
+            // Caso adicione 'spotify' ou outros no futuro, mapear aqui
+            default: return 'ofertas-clonadas';
+        }
+    };
+
     return (
         <div className="space-y-6 md:space-y-10 animate-in fade-in duration-700">
+            {/* ... (código do banner mantido igual, não alterando para economizar tokens na resposta, o replace deve focar na parte de baixo ou eu incluo tudo se for mais seguro) ... */}
+            {/* Vou substituir apenas o bloco do return final para garantir que a função fique no escopo correto ou inserir a função antes do return */}
+
             <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-16 relative overflow-hidden flex flex-col md:flex-row items-center justify-between group shadow-2xl transition-all">
                 <div className="relative z-10 max-w-xl w-full">
                     <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6">
@@ -84,6 +112,14 @@ const DashboardView: React.FC<DashboardViewProps> = ({ onTabChange }) => {
                                 value={product ? product.product_name : "Disponível"}
                                 icon={info.icon}
                                 color={info.color as any}
+                                onClick={() => {
+                                    if (product) {
+                                        // Usa a categoria salva no banco de dados para direcionar
+                                        onTabChange(getDestinationTab(product.category));
+                                    } else {
+                                        onTabChange('ofertas-clonadas');
+                                    }
+                                }}
                             />
                         </div>
                     );

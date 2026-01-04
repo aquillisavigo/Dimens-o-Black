@@ -174,6 +174,9 @@ const App: React.FC = () => {
     window.location.hash = activeTab;
   }, [activeTab]);
 
+  // Main Scroll Ref
+  const mainRef = React.useRef<HTMLDivElement>(null);
+
   // Escuta mudanças no botão voltar do navegador
   useEffect(() => {
     const handleHashChange = () => {
@@ -183,6 +186,13 @@ const App: React.FC = () => {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
+  // Scroll to top on Tab Change
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTo(0, 0);
+    }
+  }, [activeTab]);
 
   // Capture Referral Code from URL
   useEffect(() => {
@@ -461,7 +471,7 @@ const App: React.FC = () => {
           userId={session?.user?.id.substring(0, 8).toUpperCase() || ''}
         />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-4 scroll-smooth bg-background-light dark:bg-background-dark relative transition-colors duration-300">
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-4 scroll-smooth bg-background-light dark:bg-background-dark relative transition-colors duration-300">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] pointer-events-none opacity-0 dark:opacity-100 transition-opacity duration-500"></div>
 
           <div className="max-w-6xl mx-auto relative z-10">
