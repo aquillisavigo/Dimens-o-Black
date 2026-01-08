@@ -33,9 +33,8 @@ const AdminView: React.FC = () => {
 
     const categories = [
         { id: 'clonagem', name: 'Ofertas Clonadas' },
-        { id: 'temas', name: 'Temas Shopify' },
-        { id: 'kl-remotas', name: 'KL Remotas' },
-        { id: 'spotify', name: 'Contas Spotify' }
+        { id: 'cassinos', name: 'Cassinos & Jogos' },
+        { id: 'kl-remotas', name: 'KL Remotas' }
     ];
 
     useEffect(() => {

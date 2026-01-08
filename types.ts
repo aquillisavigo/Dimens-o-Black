@@ -1,5 +1,5 @@
 
-export type ActiveTab = 'dashboard' | 'black-money' | 'temas' | 'clonagem' | 'planos' | 'forum' | 'networking' | 'ofertas-clonadas' | 'profile' | 'kl-remotas' | 'admin' | 'downloads' | 'affiliates';
+export type ActiveTab = 'dashboard' | 'black-money' | 'cassinos' | 'clonagem' | 'planos' | 'forum' | 'networking' | 'ofertas-clonadas' | 'profile' | 'kl-remotas' | 'admin' | 'downloads' | 'affiliates';
 
 export interface StatData {
   title: string;

@@ -21,7 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, activeTab, onTabChan
     { id: 'affiliates', label: 'Afiliados', icon: 'campaign', category: 'FINANCEIRO' },
     { id: 'ofertas-clonadas', label: 'Ofertas Clonadas', icon: 'local_fire_department', category: 'FERRAMENTAS' },
     { id: 'clonagem', label: 'Solicitar Clonagem', icon: 'content_copy', category: 'FERRAMENTAS' },
-    { id: 'temas', label: 'Temas Shopify', icon: 'storefront', category: 'FERRAMENTAS' },
+    { id: 'cassinos', label: 'Cassinos & Jogos', icon: 'casino', category: 'FERRAMENTAS' },
     { id: 'kl-remotas', label: 'KL Remotas', icon: 'settings_remote', category: 'FERRAMENTAS' },
     { id: 'planos', label: 'Nossos Planos', icon: 'military_tech', category: 'ASSINATURA' },
     { id: 'admin', label: 'Painel Admin', icon: 'admin_panel_settings', category: 'GESTAO' },

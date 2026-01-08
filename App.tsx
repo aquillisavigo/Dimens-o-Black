@@ -49,7 +49,7 @@ const App: React.FC = () => {
   // Navegação baseada em Hash
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
     const hash = window.location.hash.replace('#', '') as ActiveTab;
-    const validTabs: ActiveTab[] = ['dashboard', 'black-money', 'temas', 'clonagem', 'planos', 'forum', 'networking', 'ofertas-clonadas', 'profile', 'kl-remotas', 'admin', 'downloads', 'affiliates'];
+    const validTabs: ActiveTab[] = ['dashboard', 'black-money', 'cassinos', 'clonagem', 'planos', 'forum', 'networking', 'ofertas-clonadas', 'profile', 'kl-remotas', 'admin', 'downloads', 'affiliates'];
     return validTabs.includes(hash) ? hash : 'dashboard';
   });
 
@@ -381,7 +381,7 @@ const App: React.FC = () => {
       case 'profile':
         if (!session) { return <RestrictedAccess onLogin={() => setShowLogin(true)} />; }
         return <ProfileView profile={profile} onUpdate={() => fetchProfile(session?.user?.id)} />;
-      case 'temas':
+      case 'cassinos':
         return <TemasView balance={balance} onPurchase={handlePurchase} />;
       case 'clonagem':
         return <SolicitarClonagemView balance={balance} onPurchase={handlePurchase} />;
