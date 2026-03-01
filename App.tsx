@@ -438,8 +438,8 @@ const App: React.FC = () => {
 
       {/* Login Overlay */}
       {showLogin && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-300">
-          <div className="relative w-full max-w-md">
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-start md:items-center justify-center overflow-y-auto p-4 md:p-6 animate-in fade-in duration-300">
+          <div className="relative w-full max-w-md my-auto">
             <button
               onClick={() => setShowLogin(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-white z-50 bg-black/50 p-2 rounded-full"

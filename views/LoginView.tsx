@@ -80,7 +80,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onToast }) => {
   return (
     <div className="w-full relative z-10 animate-in zoom-in-95 duration-700">
       <div className="text-center mb-10">
-        <Logo size={240} className="mx-auto mb-8 drop-shadow-[0_0_25px_rgba(212,0,0,0.7)] animate-pulse" />
+        <Logo size={window.innerWidth < 768 ? 160 : 240} className="mx-auto mb-8 drop-shadow-[0_0_25px_rgba(212,0,0,0.7)] animate-pulse transition-all duration-500" />
         <h1 className="text-3xl font-display font-bold text-white uppercase tracking-wider">
           {authMode === 'login' && <><span className="text-primary">Acesso</span> Dimensão</>}
           {authMode === 'signup' && <><span className="text-primary">Criar</span> Identidade</>}
@@ -89,7 +89,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onToast }) => {
         <p className="text-gray-500 text-sm mt-2 uppercase tracking-widest font-bold">Painel de Controle Elite</p>
       </div>
 
-      <div className="bg-surface-dark/50 backdrop-blur-xl border border-border-dark p-6 md:p-10 rounded-[2.5rem] shadow-2xl space-y-6 relative overflow-hidden custom-scrollbar">
+      <div className="bg-surface-dark/50 backdrop-blur-xl border border-border-dark p-6 md:p-10 rounded-[2.5rem] shadow-2xl space-y-6 relative custom-scrollbar">
         {authMode === 'login' && (
           <form onSubmit={handleLogin} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
@@ -163,8 +163,17 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onToast }) => {
                 type="text"
                 placeholder="000.000.000-00"
                 required
+                maxLength={14}
                 value={document}
-                onChange={(e) => setDocument(e.target.value)}
+                onChange={(e) => {
+                  let v = e.target.value.replace(/\D/g, "");
+                  if (v.length <= 11) {
+                    v = v.replace(/(\d{3})(\d)/, "$1.$2");
+                    v = v.replace(/(\d{3})(\d)/, "$1.$2");
+                    v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+                  }
+                  setDocument(v);
+                }}
                 className="w-full bg-surface-dark-2 border border-border-dark rounded-2xl px-6 py-5 text-sm focus:outline-none focus:border-primary transition-all text-white placeholder:text-gray-600"
               />
             </div>
