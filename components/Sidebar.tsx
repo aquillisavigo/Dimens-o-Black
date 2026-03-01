@@ -56,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, activeTab, onTabChan
         <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-6 custom-scrollbar">
           {['PAINEL', 'FERRAMENTAS', 'FINANCEIRO', 'ASSINATURA', 'GESTAO'].map(category => {
             const items = menuItems.filter(item => {
-              if (item.id === 'admin' && !profile?.is_admin) return false;
+              if (item.id === 'admin' && !profile?.is_admin && profile?.role !== 'admin' && profile?.role !== 'owner') return false;
               if (item.id === 'affiliates' && !profile) return false;
               return item.category === category;
             });

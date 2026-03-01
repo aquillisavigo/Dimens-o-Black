@@ -382,7 +382,10 @@ const AdminView: React.FC = () => {
         if (!window.confirm(`Tem certeza que deseja alterar o nível deste usuário para ${newRole.toUpperCase()}?`)) return;
 
         setLoading(true);
-        const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+        const { error } = await supabase.from('profiles').update({ 
+            role: newRole,
+            is_admin: newRole === 'admin' 
+        }).eq('id', userId);
 
         if (error) {
             alert('Erro ao atualizar permissão: ' + error.message);
